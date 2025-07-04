@@ -2,12 +2,23 @@ version: '2.2'
 
 services:
   unbound-phreakmail:
-    image: alpine:3.18
+    image: alpine:3.16
     command: >
       sh -c "apk add --no-cache unbound curl &&
+             mkdir -p /etc/unbound/unbound.conf.d &&
+             echo 'server:' > /etc/unbound/unbound.conf &&
+             echo '  interface: 0.0.0.0' >> /etc/unbound/unbound.conf &&
+             echo '  access-control: 0.0.0.0/0 allow' >> /etc/unbound/unbound.conf &&
+             echo '  do-ip4: yes' >> /etc/unbound/unbound.conf &&
+             echo '  do-ip6: yes' >> /etc/unbound/unbound.conf &&
+             echo '  do-udp: yes' >> /etc/unbound/unbound.conf &&
+             echo '  do-tcp: yes' >> /etc/unbound/unbound.conf &&
+             echo '  forward-zone:' >> /etc/unbound/unbound.conf &&
+             echo '    name: "."' >> /etc/unbound/unbound.conf &&
+             echo '    forward-addr: 8.8.8.8' >> /etc/unbound/unbound.conf &&
+             echo '    forward-addr: 8.8.4.4' >> /etc/unbound/unbound.conf &&
              touch /tmp/healthy &&
-             echo 'Unbound service placeholder running...' &&
-             while true; do sleep 3600; done"
+             unbound -d"
     environment:
       TZ: ${TZ}
       SKIP_UNBOUND_HEALTHCHECK: ${SKIP_UNBOUND_HEALTHCHECK}
@@ -262,7 +273,7 @@ services:
           - sogo
 
   dovecot-phreakmail:
-    image: alpine:3.18
+    image: alpine:3.16
     command: >
       sh -c "apk add --no-cache dovecot dovecot-mysql &&
              echo 'Dovecot service placeholder running...' &&
@@ -493,7 +504,7 @@ services:
           - acme
 
   netfilter-phreakmail:
-    image: alpine:3.18
+    image: alpine:3.16
     command: >
       sh -c "apk add --no-cache iptables ip6tables &&
              while true; do sleep 3600; done"
@@ -516,7 +527,7 @@ services:
       - /lib/modules:/lib/modules:ro
 
   watchdog-phreakmail:
-    image: alpine:3.18
+    image: alpine:3.16
     command: >
       sh -c "apk add --no-cache curl jq &&
              echo 'Watchdog service placeholder running...' &&
@@ -593,7 +604,7 @@ services:
           - watchdog
 
   dockerapi-phreakmail:
-    image: alpine:3.18
+    image: alpine:3.16
     command: >
       sh -c "apk add --no-cache curl jq &&
              while true; do sleep 3600; done"
