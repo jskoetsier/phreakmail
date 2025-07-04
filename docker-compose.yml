@@ -63,6 +63,7 @@ services:
       phreakmail-network:
         aliases:
           - mysql
+          - mysql-phreakmail
 
   redis-phreakmail:
     image: redis:7.4.2-alpine
@@ -142,10 +143,12 @@ services:
 
   php-fpm-phreakmail:
     image: mailcow/phpfpm:latest
+    entrypoint: ["/custom-entrypoint.sh"]
     command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
     depends_on:
       - redis-phreakmail
     volumes:
+      - ./custom-entrypoint.sh:/custom-entrypoint.sh:z
       - ./data/hooks/phpfpm:/hooks:Z
       - ./data/web:/web:z
       - ./data/conf/rspamd/dynmaps:/dynmaps:ro,z
@@ -225,6 +228,7 @@ services:
 
   sogo-phreakmail:
     image: mailcow/sogo:latest
+    entrypoint: ["/sogo-entrypoint.sh"]
     environment:
       DBNAME: ${DBNAME}
       DBUSER: ${DBUSER}
@@ -245,6 +249,7 @@ services:
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     volumes:
+      - ./sogo-entrypoint.sh:/sogo-entrypoint.sh:z
       - ./data/hooks/sogo:/hooks:Z
       - ./data/conf/sogo/:/etc/sogo/:z
       - ./data/web/inc/init_db.inc.php:/init_db.inc.php:z
