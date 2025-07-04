@@ -1,0 +1,152 @@
+# Main configuration file for Exim in PhreakMail
+# This is a template that will be processed by update-exim4.conf
+
+# MAIN CONFIGURATION SETTINGS
+primary_hostname = ${PHREAKMAIL_HOSTNAME}
+domainlist local_domains = ${PHREAKMAIL_HOSTNAME} : localhost : @
+
+# SMTP SETTINGS
+daemon_smtp_ports = 25 : 465 : 587
+tls_advertise_hosts = *
+tls_certificate = /etc/ssl/mail/cert.pem
+tls_privatekey = /etc/ssl/mail/key.pem
+
+# INTERFACES
+local_interfaces = 0.0.0.0
+
+# ACL CONFIGURATION
+acl_smtp_rcpt = acl_check_rcpt
+acl_smtp_data = acl_check_data
+acl_smtp_mail = acl_check_mail
+
+# MYSQL CONNECTION
+MYSQL_SERVER = mysql-phreakmail
+MYSQL_DATABASE = ${DBNAME}
+MYSQL_USER = ${DBUSER}
+MYSQL_PASS = ${DBPASS}
+
+# KEYDB CONNECTION
+KEYDB_SERVER = keydb-phreakmail
+KEYDB_PORT = 6379
+KEYDB_PASS = ${KEYDBPASS}
+
+# RSPAMD CONNECTION
+RSPAMD_HOST = rspamd-phreakmail
+RSPAMD_PORT = 11332
+
+# LOGGING
+log_selector = +smtp_protocol_error +smtp_syntax_error +tls_certificate_verified +tls_peerdn
+
+# ROUTERS
+begin routers
+
+# Check if the domain is local
+domain_router:
+  driver = redirect
+  domains = +local_domains
+  data = ${local_part}@${domain}
+  redirect_router = localuser_router
+
+# Handle local mail
+localuser_router:
+  driver = accept
+  domains = +local_domains
+  condition = ${lookup mysql{SELECT 1 FROM mailbox WHERE username='${quote_mysql:$local_part@$domain}' LIMIT 1}{yes}{no}}
+  transport = dovecot_delivery
+
+# Handle aliases
+alias_router:
+  driver = redirect
+  domains = +local_domains
+  data = ${lookup mysql{SELECT goto FROM alias WHERE address='${quote_mysql:$local_part@$domain}' AND active='1' LIMIT 1}{$value}{$local_part@$domain}}
+  pipe_transport = address_pipe
+  unseen
+
+# Handle remote mail
+remote_smtp:
+  driver = dnslookup
+  domains = ! +local_domains
+  transport = remote_smtp
+  ignore_target_hosts = 0.0.0.0 : 127.0.0.0/8
+  no_more
+
+# TRANSPORTS
+begin transports
+
+# Deliver to Dovecot
+dovecot_delivery:
+  driver = smtp
+  hosts = dovecot-phreakmail
+  port = 24
+  allow_localhost
+  helo_data = ${primary_hostname}
+
+# Remote SMTP delivery
+remote_smtp:
+  driver = smtp
+  helo_data = ${primary_hostname}
+  hosts_require_tls = *
+
+# Pipe transport for aliases
+address_pipe:
+  driver = pipe
+  return_output
+
+# RETRY CONFIGURATION
+begin retry
+*                      *           F,2h,15m; G,16h,1h,1.5; F,4d,6h
+
+# REWRITE CONFIGURATION
+begin rewrite
+
+# AUTHENTICATORS
+begin authenticators
+
+# Plain authentication
+plain:
+  driver = plaintext
+  public_name = PLAIN
+  server_condition = ${lookup mysql{SELECT 1 FROM mailbox WHERE username='${quote_mysql:$auth2}' AND password='${quote_mysql:$auth3}' LIMIT 1}{yes}{no}}
+  server_set_id = $auth2
+
+# Login authentication
+login:
+  driver = plaintext
+  public_name = LOGIN
+  server_prompts = "Username:: : Password::"
+  server_condition = ${lookup mysql{SELECT 1 FROM mailbox WHERE username='${quote_mysql:$auth1}' AND password='${quote_mysql:$auth2}' LIMIT 1}{yes}{no}}
+  server_set_id = $auth1
+
+# ACL CONFIGURATION
+begin acl
+
+# ACL for RCPT TO command
+acl_check_rcpt:
+  # Accept if the source is local
+  accept  hosts = :
+
+  # Deny if the recipient domain is not local and we're not relaying
+  deny    domains = !+local_domains
+          message = Relay not permitted
+          !authenticated = *
+
+  # Check if the recipient exists
+  deny    domains = +local_domains
+          !condition = ${lookup mysql{SELECT 1 FROM mailbox WHERE username='${quote_mysql:$local_part@$domain}' LIMIT 1}{yes}{no}}
+          message = Unknown user
+
+  # Accept all other cases
+  accept
+
+# ACL for DATA command
+acl_check_data:
+  # Scan with Rspamd
+  warn    spam = rspamd:${RSPAMD_HOST}:${RSPAMD_PORT}
+
+  # Accept all mail
+  accept
+
+# ACL for MAIL FROM command
+acl_check_mail:
+  # Accept all mail
+  accept

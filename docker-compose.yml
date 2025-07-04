@@ -298,18 +298,26 @@ services:
         aliases:
           - dovecot
 
-  postfix-phreakmail:
-    image: mailcow/postfix:latest
+  exim-phreakmail:
+    image: debian:bullseye-slim
+    command: >
+      sh -c "apt-get update && apt-get install -y exim4 exim4-daemon-heavy exim4-config mailutils openssl ca-certificates &&
+             mkdir -p /etc/exim4/conf.d &&
+             touch /var/log/exim4/mainlog &&
+             echo 'Configuring Exim...' &&
+             update-exim4.conf.template -r &&
+             service exim4 start &&
+             tail -f /var/log/exim4/mainlog"
     depends_on:
       mysql-phreakmail:
         condition: service_started
       unbound-phreakmail:
         condition: service_healthy
     volumes:
-      - ./data/hooks/postfix:/hooks:Z
-      - ./data/conf/postfix:/opt/postfix/conf:z
+      - ./data/hooks/exim:/hooks:Z
+      - ./data/conf/exim:/etc/exim4/conf.d:z
       - ./data/assets/ssl:/etc/ssl/mail/:ro,z
-      - postfix-vol-1:/var/spool/postfix
+      - exim-vol-1:/var/spool/exim4
       - crypt-vol-1:/var/lib/zeyple
       - rspamd-vol-1:/var/lib/rspamd
       - mysql-socket-vol-1:/var/run/mysqld/
@@ -337,7 +345,7 @@ services:
       phreakmail-network:
         ipv4_address: ${IPV4_NETWORK:-172.22.1}.253
         aliases:
-          - postfix
+          - exim
 
   memcached-phreakmail:
     image: memcached:alpine
@@ -470,11 +478,11 @@ services:
     volumes:
       - rspamd-vol-1:/var/lib/rspamd
       - mysql-socket-vol-1:/var/run/mysqld/
-      - postfix-vol-1:/var/spool/postfix
+      - exim-vol-1:/var/spool/exim4
       - ./data/assets/ssl:/etc/ssl/mail/:ro,z
     restart: always
     depends_on:
-      - postfix-phreakmail
+      - exim-phreakmail
       - dovecot-phreakmail
       - mysql-phreakmail
       - acme-phreakmail
@@ -622,7 +630,7 @@ services:
       - rspamd-phreakmail
       - php-fpm-phreakmail
       - dovecot-phreakmail
-      - postfix-phreakmail
+      - exim-phreakmail
       - memcached-phreakmail
       - apache2-phreakmail
       - acme-phreakmail
@@ -660,7 +668,7 @@ volumes:
   mysql-socket-vol-1:
   keydb-vol-1:
   rspamd-vol-1:
-  postfix-vol-1:
+  exim-vol-1:
   crypt-vol-1:
   comodo-db-vol-1:
   django-static:
