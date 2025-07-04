@@ -575,7 +575,10 @@ services:
           - watchdog
 
   dockerapi-phreakmail:
-    image: mailcow/dockerapi:latest
+    image: alpine:latest
+    command: >
+      sh -c "apk add --no-cache curl jq &&
+             while true; do sleep 3600; done"
     security_opt:
       - label=disable
     restart: always
