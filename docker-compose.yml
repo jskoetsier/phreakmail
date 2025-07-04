@@ -1,9 +1,11 @@
+version: '2.1'
+
 services:
   unbound-phreakmail:
     image: ghcr.io/phreak/unbound:1.0.0
     environment:
-      TZ: ${TZ:-UTC}
-      SKIP_UNBOUND_HEALTHCHECK: ${SKIP_UNBOUND_HEALTHCHECK:-n}
+      TZ: ${TZ}
+      SKIP_UNBOUND_HEALTHCHECK: ${SKIP_UNBOUND_HEALTHCHECK}
     volumes:
       - ./data/hooks/unbound:/hooks:Z
       - ./data/conf/unbound/unbound.conf:/etc/unbound/unbound.conf:ro,Z
