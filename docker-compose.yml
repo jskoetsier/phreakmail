@@ -65,12 +65,12 @@ services:
           - mysql
           - mysql-phreakmail
 
-  redis-phreakmail:
-    image: redis:7.4.2-alpine
-    entrypoint: ["/bin/sh","/redis-conf.sh"]
+  keydb-phreakmail:
+    image: eqalpha/keydb:latest
+    entrypoint: ["/bin/sh","/keydb-conf.sh"]
     volumes:
-      - redis-vol-1:/data/
-      - ./data/conf/redis/redis-conf.sh:/redis-conf.sh:z
+      - keydb-vol-1:/data/
+      - ./data/conf/keydb/keydb-conf.sh:/keydb-conf.sh:z
     restart: always
     depends_on:
       - netfilter-phreakmail
@@ -78,49 +78,31 @@ services:
       - "127.0.0.1:7654:6379"
     environment:
       TZ: ${TZ}
-      REDISPASS: ${REDISPASS}
-      REDISMASTERPASS: ${REDISMASTERPASS:-}
+      KEYDBPASS: ${KEYDBPASS:-}
+      KEYDBMASTERPASS: ${KEYDBMASTERPASS:-}
+      KEYDB_THREADS: 4
     sysctls:
       - net.core.somaxconn=4096
     networks:
       phreakmail-network:
         ipv4_address: ${IPV4_NETWORK:-172.22.1}.249
         aliases:
-          - redis
-          - redis-mailcow
-
-  clamd-phreakmail:
-    image: mailcow/clamd:latest
-    restart: always
-    depends_on:
-      unbound-phreakmail:
-        condition: service_healthy
-    dns:
-      - ${IPV4_NETWORK:-172.22.1}.254
-    environment:
-      TZ: ${TZ}
-      SKIP_CLAMD: ${SKIP_CLAMD:-n}
-    volumes:
-      - ./data/conf/clamav/:/etc/clamav/:Z
-      - clamd-db-vol-1:/var/lib/clamav
-    networks:
-      phreakmail-network:
-        aliases:
-          - clamd
+          - keydb
+          - keydb-mailcow
 
   rspamd-phreakmail:
     image: mailcow/rspamd:latest
     stop_grace_period: 30s
     depends_on:
       - dovecot-phreakmail
-      - clamd-phreakmail
+      - comodo-phreakmail
     environment:
       TZ: ${TZ}
       IPV4_NETWORK: ${IPV4_NETWORK:-172.22.1}
       IPV6_NETWORK: ${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
-      REDIS_SLAVEOF_IP: ${REDIS_SLAVEOF_IP:-}
-      REDIS_SLAVEOF_PORT: ${REDIS_SLAVEOF_PORT:-}
-      REDISPASS: ${REDISPASS}
+      KEYDB_SLAVEOF_IP: ${KEYDB_SLAVEOF_IP:-}
+      KEYDB_SLAVEOF_PORT: ${KEYDB_SLAVEOF_PORT:-}
+      KEYDBPASS: ${KEYDBPASS:-}
       SPAMHAUS_DQS_KEY: ${SPAMHAUS_DQS_KEY:-}
     volumes:
       - ./data/hooks/rspamd:/hooks:Z
@@ -146,7 +128,7 @@ services:
     entrypoint: ["/custom-entrypoint.sh"]
     command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
     depends_on:
-      - redis-phreakmail
+      - keydb-phreakmail
     volumes:
       - ./custom-entrypoint.sh:/custom-entrypoint.sh:z
       - ./data/hooks/phpfpm:/hooks:Z
@@ -162,7 +144,6 @@ services:
       - ./data/web/inc/functions.acl.inc.php:/phreakmailauth/functions.acl.inc.php:z
       - rspamd-vol-1:/var/lib/rspamd
       - mysql-socket-vol-1:/var/run/mysqld/
-      - ./data/conf/sogo/:/etc/sogo/:z
       - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro,z
       - ./data/conf/phpfpm/crons:/crons:z
       - ./data/conf/phpfpm/sogo-sso/:/etc/sogo-sso/:z
@@ -173,13 +154,13 @@ services:
       - ./data/conf/dovecot/global_sieve_before:/global_sieve/before:z
       - ./data/conf/dovecot/global_sieve_after:/global_sieve/after:z
       - ./data/assets/templates:/tpls:z
-      - ./data/conf/nginx/:/etc/nginx/conf.d/:z
+      - ./data/conf/apache2/:/etc/apache2/conf.d/:z
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     environment:
-      REDIS_SLAVEOF_IP: ${REDIS_SLAVEOF_IP:-}
-      REDIS_SLAVEOF_PORT: ${REDIS_SLAVEOF_PORT:-}
-      REDISPASS: ${REDISPASS}
+      KEYDB_SLAVEOF_IP: ${KEYDB_SLAVEOF_IP:-}
+      KEYDB_SLAVEOF_PORT: ${KEYDB_SLAVEOF_PORT:-}
+      KEYDBPASS: ${KEYDBPASS:-}
       LOG_LINES: ${LOG_LINES:-9999}
       TZ: ${TZ}
       DBNAME: ${DBNAME}
@@ -204,7 +185,7 @@ services:
       SKIP_FTS: ${SKIP_FTS:-y}
       SKIP_CLAMD: ${SKIP_CLAMD:-n}
       SKIP_OLEFY: ${SKIP_OLEFY:-n}
-      SKIP_SOGO: ${SKIP_SOGO:-n}
+      SKIP_SOGO: ${SKIP_SOGO:-y}
       ALLOW_ADMIN_EMAIL_LOGIN: ${ALLOW_ADMIN_EMAIL_LOGIN:-n}
       MASTER: ${MASTER:-y}
       DEV_MODE: ${DEV_MODE:-n}
@@ -226,58 +207,6 @@ services:
         aliases:
           - phpfpm
 
-  sogo-phreakmail:
-    image: mailcow/sogo:latest
-    entrypoint: ["/sogo-entrypoint.sh"]
-    environment:
-      DBNAME: ${DBNAME}
-      DBUSER: ${DBUSER}
-      DBPASS: ${DBPASS}
-      TZ: ${TZ}
-      LOG_LINES: ${LOG_LINES:-9999}
-      PHREAKMAIL_HOSTNAME: ${PHREAKMAIL_HOSTNAME}
-      PHREAKMAIL_PASS_SCHEME: ${PHREAKMAIL_PASS_SCHEME:-BLF-CRYPT}
-      ACL_ANYONE: ${ACL_ANYONE:-disallow}
-      ALLOW_ADMIN_EMAIL_LOGIN: ${ALLOW_ADMIN_EMAIL_LOGIN:-n}
-      IPV4_NETWORK: ${IPV4_NETWORK:-172.22.1}
-      SOGO_EXPIRE_SESSION: ${SOGO_EXPIRE_SESSION:-480}
-      SKIP_SOGO: ${SKIP_SOGO:-n}
-      MASTER: ${MASTER:-y}
-      REDIS_SLAVEOF_IP: ${REDIS_SLAVEOF_IP:-}
-      REDIS_SLAVEOF_PORT: ${REDIS_SLAVEOF_PORT:-}
-      REDISPASS: ${REDISPASS}
-    dns:
-      - ${IPV4_NETWORK:-172.22.1}.254
-    volumes:
-      - ./sogo-entrypoint.sh:/sogo-entrypoint.sh:z
-      - ./data/hooks/sogo:/hooks:Z
-      - ./data/conf/sogo/:/etc/sogo/:z
-      - ./data/web/inc/init_db.inc.php:/init_db.inc.php:z
-      - ./data/conf/sogo/custom-favicon.ico:/usr/lib/GNUstep/SOGo/WebServerResources/img/sogo.ico:z
-      - ./data/conf/sogo/custom-shortlogo.svg:/usr/lib/GNUstep/SOGo/WebServerResources/img/sogo-compact.svg:z
-      - ./data/conf/sogo/custom-fulllogo.svg:/usr/lib/GNUstep/SOGo/WebServerResources/img/sogo-full.svg:z
-      - ./data/conf/sogo/custom-fulllogo.png:/usr/lib/GNUstep/SOGo/WebServerResources/img/sogo-logo.png:z
-      - ./data/conf/sogo/custom-theme.js:/usr/lib/GNUstep/SOGo/WebServerResources/js/theme.js:z
-      - ./data/conf/sogo/custom-sogo.js:/usr/lib/GNUstep/SOGo/WebServerResources/js/custom-sogo.js:z
-      - mysql-socket-vol-1:/var/run/mysqld/
-      - sogo-web-vol-1:/sogo_web
-      - sogo-userdata-backup-vol-1:/sogo_backup
-    labels:
-      ofelia.enabled: "true"
-      ofelia.job-exec.sogo_sessions.schedule: "@every 1m"
-      ofelia.job-exec.sogo_sessions.command: "/bin/bash -c \"[[ $${MASTER} == y ]] && /usr/local/bin/gosu sogo /usr/sbin/sogo-tool -v expire-sessions $${SOGO_EXPIRE_SESSION} || exit 0\""
-      ofelia.job-exec.sogo_ealarms.schedule: "@every 1m"
-      ofelia.job-exec.sogo_ealarms.command: "/bin/bash -c \"[[ $${MASTER} == y ]] && /usr/local/bin/gosu sogo /usr/sbin/sogo-ealarms-notify -p /etc/sogo/cron.creds || exit 0\""
-      ofelia.job-exec.sogo_eautoreply.schedule: "@every 5m"
-      ofelia.job-exec.sogo_eautoreply.command: "/bin/bash -c \"[[ $${MASTER} == y ]] && /usr/local/bin/gosu sogo /usr/sbin/sogo-tool update-autoreply -p /etc/sogo/cron.creds || exit 0\""
-      ofelia.job-exec.sogo_backup.schedule: "@every 24h"
-      ofelia.job-exec.sogo_backup.command: "/bin/bash -c \"[[ $${MASTER} == y ]] && /usr/local/bin/gosu sogo /usr/sbin/sogo-tool backup /sogo_backup ALL || exit 0\""
-    restart: always
-    networks:
-      phreakmail-network:
-        ipv4_address: ${IPV4_NETWORK:-172.22.1}.248
-        aliases:
-          - sogo
 
   dovecot-phreakmail:
     image: alpine:3.16
@@ -288,7 +217,7 @@ services:
     depends_on:
       - mysql-phreakmail
       - netfilter-phreakmail
-      - redis-phreakmail
+      - keydb-phreakmail
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     cap_add:
@@ -297,7 +226,6 @@ services:
       - ./data/hooks/dovecot:/hooks:Z
       - ./data/conf/dovecot:/etc/dovecot:z
       - ./data/assets/ssl:/etc/ssl/mail/:ro,z
-      - ./data/conf/sogo/:/etc/sogo/:z
       - ./data/conf/phpfpm/sogo-sso/:/etc/phpfpm/:z
       - vmail-vol-1:/var/vmail
       - vmail-index-vol-1:/var/vmail_index
@@ -327,9 +255,9 @@ services:
       FTS_PROCS: ${FTS_PROCS:-3}
       MAILDIR_SUB: ${MAILDIR_SUB:-}
       MASTER: ${MASTER:-y}
-      REDIS_SLAVEOF_IP: ${REDIS_SLAVEOF_IP:-}
-      REDIS_SLAVEOF_PORT: ${REDIS_SLAVEOF_PORT:-}
-      REDISPASS: ${REDISPASS}
+      KEYDB_SLAVEOF_IP: ${KEYDB_SLAVEOF_IP:-}
+      KEYDB_SLAVEOF_PORT: ${KEYDB_SLAVEOF_PORT:-}
+      KEYDBPASS: ${KEYDBPASS:-}
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-phreakmail-dockerized}
     ports:
       - "127.0.0.1:19991:12345"
@@ -391,9 +319,9 @@ services:
       DBNAME: ${DBNAME}
       DBUSER: ${DBUSER}
       DBPASS: ${DBPASS}
-      REDIS_SLAVEOF_IP: ${REDIS_SLAVEOF_IP:-}
-      REDIS_SLAVEOF_PORT: ${REDIS_SLAVEOF_PORT:-}
-      REDISPASS: ${REDISPASS}
+      KEYDB_SLAVEOF_IP: ${KEYDB_SLAVEOF_IP:-}
+      KEYDB_SLAVEOF_PORT: ${KEYDB_SLAVEOF_PORT:-}
+      KEYDBPASS: ${KEYDBPASS:-}
       PHREAKMAIL_HOSTNAME: ${PHREAKMAIL_HOSTNAME}
       SPAMHAUS_DQS_KEY: ${SPAMHAUS_DQS_KEY:-}
     cap_add:
@@ -421,13 +349,12 @@ services:
         aliases:
           - memcached
 
-  nginx-phreakmail:
+  apache2-phreakmail:
     depends_on:
-      - redis-phreakmail
+      - keydb-phreakmail
       - php-fpm-phreakmail
-      - sogo-phreakmail
       - rspamd-phreakmail
-    image: nginx:alpine
+    image: httpd:2.4-alpine
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     environment:
@@ -436,28 +363,25 @@ services:
       PHREAKMAIL_HOSTNAME: ${PHREAKMAIL_HOSTNAME}
       ADDITIONAL_SERVER_NAMES: ${ADDITIONAL_SERVER_NAMES:-}
       TZ: ${TZ}
-      SKIP_SOGO: ${SKIP_SOGO:-n}
       SKIP_RSPAMD: ${SKIP_RSPAMD:-n}
       DISABLE_IPv6: ${DISABLE_IPv6:-n}
       HTTP_REDIRECT: ${HTTP_REDIRECT:-n}
       PHPFPMHOST: ${PHPFPMHOST:-}
-      SOGOHOST: ${SOGOHOST:-}
       RSPAMDHOST: ${RSPAMDHOST:-}
-      REDISHOST: ${REDISHOST:-}
+      KEYDBHOST: ${KEYDBHOST:-}
       IPV4_NETWORK: ${IPV4_NETWORK:-172.22.1}
-      NGINX_USE_PROXY_PROTOCOL: ${NGINX_USE_PROXY_PROTOCOL:-n}
+      APACHE_USE_PROXY_PROTOCOL: ${APACHE_USE_PROXY_PROTOCOL:-n}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
     volumes:
       - ./data/web:/web:ro,z
       - ./data/conf/rspamd/dynmaps:/dynmaps:ro,z
       - ./data/assets/ssl/:/etc/ssl/mail/:ro,z
-      - ./data/conf/nginx/:/etc/nginx/conf.d/:z
+      - ./data/conf/apache2/:/usr/local/apache2/conf/extra/:z
       - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro,z
       - ./data/conf/dovecot/auth/phreakmailauth.php:/phreakmailauth/phreakmailauth.php:z
       - ./data/web/inc/functions.inc.php:/phreakmailauth/functions.inc.php:z
       - ./data/web/inc/functions.auth.inc.php:/phreakmailauth/functions.auth.inc.php:z
       - ./data/web/inc/sessions.inc.php:/phreakmailauth/sessions.inc.php:z
-      - sogo-web-vol-1:/usr/lib/GNUstep/SOGo/
     ports:
       - "443:443"
       - "80:80"
@@ -465,11 +389,11 @@ services:
     networks:
       phreakmail-network:
         aliases:
-          - nginx
+          - apache2
 
   acme-phreakmail:
     depends_on:
-      nginx-phreakmail:
+      apache2-phreakmail:
         condition: service_started
       unbound-phreakmail:
         condition: service_healthy
@@ -494,9 +418,9 @@ services:
       ONLY_MAILCOW_HOSTNAME: ${ONLY_MAILCOW_HOSTNAME:-n}
       LE_STAGING: ${LE_STAGING:-n}
       TZ: ${TZ}
-      REDIS_SLAVEOF_IP: ${REDIS_SLAVEOF_IP:-}
-      REDIS_SLAVEOF_PORT: ${REDIS_SLAVEOF_PORT:-}
-      REDISPASS: ${REDISPASS}
+      KEYDB_SLAVEOF_IP: ${KEYDB_SLAVEOF_IP:-}
+      KEYDB_SLAVEOF_PORT: ${KEYDB_SLAVEOF_PORT:-}
+      KEYDBPASS: ${KEYDBPASS:-}
       SNAT_TO_SOURCE: ${SNAT_TO_SOURCE:-n}
       SNAT6_TO_SOURCE: ${SNAT6_TO_SOURCE:-n}
     volumes:
@@ -524,9 +448,9 @@ services:
       IPV6_NETWORK: ${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
       SNAT_TO_SOURCE: ${SNAT_TO_SOURCE:-n}
       SNAT6_TO_SOURCE: ${SNAT6_TO_SOURCE:-n}
-      REDIS_SLAVEOF_IP: ${REDIS_SLAVEOF_IP:-}
-      REDIS_SLAVEOF_PORT: ${REDIS_SLAVEOF_PORT:-}
-      REDISPASS: ${REDISPASS}
+      KEYDB_SLAVEOF_IP: ${KEYDB_SLAVEOF_IP:-}
+      KEYDB_SLAVEOF_PORT: ${KEYDB_SLAVEOF_PORT:-}
+      KEYDBPASS: ${KEYDBPASS:-}
       MAILCOW_REPLICA_IP: ${MAILCOW_REPLICA_IP:-}
       DISABLE_NETFILTER_ISOLATION_RULE: ${DISABLE_NETFILTER_ISOLATION_RULE:-n}
     network_mode: "host"
@@ -554,7 +478,7 @@ services:
       - dovecot-phreakmail
       - mysql-phreakmail
       - acme-phreakmail
-      - redis-phreakmail
+      - keydb-phreakmail
     environment:
       IPV6_NETWORK: ${IPV6_NETWORK:-fd4d:6169:6c63:6f77::/64}
       LOG_LINES: ${LOG_LINES:-9999}
@@ -583,13 +507,12 @@ services:
       SKIP_LETS_ENCRYPT: ${SKIP_LETS_ENCRYPT:-n}
       SKIP_SOGO: ${SKIP_SOGO:-n}
       HTTPS_PORT: ${HTTPS_PORT:-443}
-      REDIS_SLAVEOF_IP: ${REDIS_SLAVEOF_IP:-}
-      REDIS_SLAVEOF_PORT: ${REDIS_SLAVEOF_PORT:-}
-      REDISPASS: ${REDISPASS}
+      KEYDB_SLAVEOF_IP: ${KEYDB_SLAVEOF_IP:-}
+      KEYDB_SLAVEOF_PORT: ${KEYDB_SLAVEOF_PORT:-}
+      KEYDBPASS: ${KEYDBPASS:-}
       EXTERNAL_CHECKS_THRESHOLD: ${EXTERNAL_CHECKS_THRESHOLD:-1}
-      NGINX_THRESHOLD: ${NGINX_THRESHOLD:-5}
-      UNBOUND_THRESHOLD: ${UNBOUND_THRESHOLD:-5}
-      REDIS_THRESHOLD: ${REDIS_THRESHOLD:-5}
+      APACHE_THRESHOLD: ${APACHE_THRESHOLD:-5}
+      KEYDB_THRESHOLD: ${KEYDB_THRESHOLD:-5}
       MYSQL_THRESHOLD: ${MYSQL_THRESHOLD:-5}
       MYSQL_REPLICATION_THRESHOLD: ${MYSQL_REPLICATION_THRESHOLD:-1}
       SOGO_THRESHOLD: ${SOGO_THRESHOLD:-3}
@@ -623,15 +546,29 @@ services:
     environment:
       DBROOT: ${DBROOT}
       TZ: ${TZ}
-      REDIS_SLAVEOF_IP: ${REDIS_SLAVEOF_IP:-}
-      REDIS_SLAVEOF_PORT: ${REDIS_SLAVEOF_PORT:-}
-      REDISPASS: ${REDISPASS}
+      KEYDB_SLAVEOF_IP: ${KEYDB_SLAVEOF_IP:-}
+      KEYDB_SLAVEOF_PORT: ${KEYDB_SLAVEOF_PORT:-}
+      KEYDBPASS: ${KEYDBPASS:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       phreakmail-network:
         aliases:
           - dockerapi
+
+  comodo-phreakmail:
+    image: tecnativa/comodo-cav:latest
+    restart: always
+    volumes:
+      - comodo-db-vol-1:/var/lib/comodo
+      - ./data/conf/comodo:/etc/comodo:Z
+    environment:
+      TZ: ${TZ}
+      SKIP_COMODO: ${SKIP_COMODO:-n}
+    networks:
+      phreakmail-network:
+        aliases:
+          - comodo
 
   olefy-phreakmail:
     image: python:3.9-slim
@@ -664,7 +601,6 @@ services:
       TZ: ${TZ}
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}
     depends_on:
-      - sogo-phreakmail
       - dovecot-phreakmail
     labels:
       ofelia.enabled: "true"
@@ -681,15 +617,14 @@ services:
     depends_on:
       - unbound-phreakmail
       - mysql-phreakmail
-      - redis-phreakmail
-      - clamd-phreakmail
+      - keydb-phreakmail
+      - comodo-phreakmail
       - rspamd-phreakmail
       - php-fpm-phreakmail
-      - sogo-phreakmail
       - dovecot-phreakmail
       - postfix-phreakmail
       - memcached-phreakmail
-      - nginx-phreakmail
+      - apache2-phreakmail
       - acme-phreakmail
       - netfilter-phreakmail
       - watchdog-phreakmail
@@ -723,11 +658,9 @@ volumes:
   vmail-index-vol-1:
   mysql-vol-1:
   mysql-socket-vol-1:
-  redis-vol-1:
+  keydb-vol-1:
   rspamd-vol-1:
   postfix-vol-1:
   crypt-vol-1:
-  sogo-web-vol-1:
-  sogo-userdata-backup-vol-1:
-  clamd-db-vol-1:
+  comodo-db-vol-1:
   django-static:
