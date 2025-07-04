@@ -146,9 +146,35 @@ check_for_updates() {
     # Fetch the latest changes
     git fetch origin
 
+    # Determine the default branch (main or master)
+    local default_branch=""
+    if git show-ref --verify --quiet refs/remotes/origin/main; then
+        default_branch="main"
+    elif git show-ref --verify --quiet refs/remotes/origin/master; then
+        default_branch="master"
+    else
+        # Try to get the default branch from the remote
+        default_branch=$(git remote show origin | grep "HEAD branch" | sed 's/.*: //')
+
+        if [ -z "${default_branch}" ]; then
+            log_error "Could not determine the default branch. Please check your git repository."
+            return 1
+        fi
+    fi
+
+    log_info "Using default branch: ${default_branch}"
+
     # Check if there are any updates
     local local_commit=$(git rev-parse HEAD)
-    local remote_commit=$(git rev-parse origin/main)
+    local remote_branch="origin/${default_branch}"
+
+    # Check if the remote branch exists
+    if ! git rev-parse --verify --quiet "${remote_branch}" >/dev/null; then
+        log_error "Remote branch ${remote_branch} does not exist. Please check your git repository."
+        return 1
+    fi
+
+    local remote_commit=$(git rev-parse "${remote_branch}")
 
     if [ "${local_commit}" = "${remote_commit}" ]; then
         log_info "You are already running the latest version of PhreakMail."
@@ -158,12 +184,14 @@ check_for_updates() {
 
         # Show the changes
         log_info "Changes since your version:"
-        git log --oneline --no-decorate "${local_commit}..${remote_commit}" | head -n 10
-
-        # If there are more than 10 commits, show a message
-        local commit_count=$(git log --oneline "${local_commit}..${remote_commit}" | wc -l | tr -d ' ')
-        if [ "${commit_count}" -gt 10 ]; then
-            log_info "... and $(($commit_count - 10)) more commits."
+        if git log --oneline --no-decorate "${local_commit}..${remote_commit}" 2>/dev/null; then
+            # Count the number of commits
+            local commit_count=$(git log --oneline "${local_commit}..${remote_commit}" 2>/dev/null | wc -l | tr -d ' ')
+            if [ "${commit_count}" -gt 10 ]; then
+                log_info "... and $(($commit_count - 10)) more commits."
+            fi
+        else
+            log_warning "Could not determine changes between versions. This might be due to unrelated histories."
         fi
 
         return 0
@@ -208,8 +236,26 @@ stop_containers() {
 update_repository() {
     log_info "Updating repository..."
 
+    # Determine the default branch (main or master)
+    local default_branch=""
+    if git show-ref --verify --quiet refs/remotes/origin/main; then
+        default_branch="main"
+    elif git show-ref --verify --quiet refs/remotes/origin/master; then
+        default_branch="master"
+    else
+        # Try to get the default branch from the remote
+        default_branch=$(git remote show origin | grep "HEAD branch" | sed 's/.*: //')
+
+        if [ -z "${default_branch}" ]; then
+            log_error "Could not determine the default branch. Please check your git repository."
+            exit 1
+        fi
+    fi
+
+    log_info "Using default branch: ${default_branch}"
+
     # Pull the latest changes
-    git pull origin main
+    git pull origin "${default_branch}"
 
     if [ $? -eq 0 ]; then
         log_success "Repository updated successfully."
@@ -218,7 +264,7 @@ update_repository() {
 
         # Attempt to resolve conflicts by resetting to the remote state
         log_warning "Resetting to the latest version from the remote repository..."
-        git reset --hard origin/main
+        git reset --hard "origin/${default_branch}"
 
         if [ $? -eq 0 ]; then
             log_success "Repository reset to the latest version successfully."
