@@ -10,7 +10,7 @@ if ($post) {
 
 $return = array("success" => false);
 if(!isset($post['username']) || !isset($post['password']) || !isset($post['real_rip'])){
-  error_log("MAILCOWAUTH: Bad Request");
+  error_log("PHREAKMAILAUTH: Bad Request");
   http_response_code(400); // Bad Request
   echo json_encode($return);
   exit();
@@ -30,12 +30,12 @@ try {
     $redis->connect(getenv('REDIS_SLAVEOF_IP'), getenv('REDIS_SLAVEOF_PORT'));
   }
   else {
-    $redis->connect('redis-mailcow', 6379);
+    $redis->connect('redis-phreakmail', 6379);
   }
   $redis->auth(getenv("REDISPASS"));
 }
 catch (Exception $e) {
-  error_log("MAILCOWAUTH: " . $e . PHP_EOL);
+  error_log("PHREAKMAILAUTH: " . $e . PHP_EOL);
   http_response_code(500); // Internal Server Error
   echo json_encode($return);
   exit;
@@ -52,7 +52,7 @@ try {
   $pdo = new PDO($dsn, $database_user, $database_pass, $opt);
 }
 catch (PDOException $e) {
-  error_log("MAILCOWAUTH: " . $e . PHP_EOL);
+  error_log("PHREAKMAILAUTH: " . $e . PHP_EOL);
   http_response_code(500); // Internal Server Error
   echo json_encode($return);
   exit;
@@ -73,7 +73,7 @@ if ($isSOGoRequest) {
   // This is a SOGo Auth request. First check for SSO password.
   $sogo_sso_pass = file_get_contents("/etc/sogo-sso/sogo-sso.pass");
   if ($sogo_sso_pass === $post['password']){
-    error_log('MAILCOWAUTH: SOGo SSO auth for user ' . $post['username']);
+    error_log('PHREAKMAILAUTH: SOGo SSO auth for user ' . $post['username']);
     set_sasl_log($post['username'], $post['real_rip'], "SOGO");
     $result = true;
   }
@@ -86,7 +86,7 @@ if ($result === false){
     'remote_addr' => $post['real_rip']
   ));
   if ($result) {
-    error_log('MAILCOWAUTH: App auth for user ' . $post['username']);
+    error_log('PHREAKMAILAUTH: App auth for user ' . $post['username']);
     set_sasl_log($post['username'], $post['real_rip'], $post['service']);
   }
 }
@@ -96,7 +96,7 @@ if ($result === false){
   $iam_settings = identity_provider('get');
   $result = user_login($post['username'], $post['password'], array('is_internal' => true));
   if ($result) {
-    error_log('MAILCOWAUTH: User auth for user ' . $post['username']);
+    error_log('PHREAKMAILAUTH: User auth for user ' . $post['username']);
     set_sasl_log($post['username'], $post['real_rip'], $post['service']);
   }
 }
@@ -105,7 +105,7 @@ if ($result) {
   http_response_code(200); // OK
   $return['success'] = true;
 } else {
-  error_log("MAILCOWAUTH: Login failed for user " . $post['username']);
+  error_log("PHREAKMAILAUTH: Login failed for user " . $post['username']);
   http_response_code(401); // Unauthorized
 }
 

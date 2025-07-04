@@ -3,14 +3,14 @@
 set -o pipefail
 
 if [[ "$(uname -r)" =~ ^4\.15\.0-60 ]]; then
-  echo "DO NOT RUN mailcow ON THIS UBUNTU KERNEL!";
+  echo "DO NOT RUN phreakmail ON THIS UBUNTU KERNEL!";
   echo "Please update to 5.x or use another distribution."
   exit 1
 fi
 
 if [[ "$(uname -r)" =~ ^4\.4\. ]]; then
   if grep -q Ubuntu <<< "$(uname -a)"; then
-    echo "DO NOT RUN mailcow ON THIS UBUNTU KERNEL!";
+    echo "DO NOT RUN phreakmail ON THIS UBUNTU KERNEL!";
     echo "Please update to linux-generic-hwe-16.04 by running \"apt-get install --install-recommends linux-generic-hwe-16.04\""
     exit 1
   fi
@@ -30,7 +30,7 @@ docker_version=$(docker version --format '{{.Server.Version}}' | cut -d '.' -f 1
 
 if [[ $docker_version -lt 24 ]]; then
   echo -e "\e[31mCannot find Docker with a Version higher or equals 24.0.0\e[0m"
-  echo -e "\e[33mmailcow needs a newer Docker version to work properly...\e[0m"
+  echo -e "\e[33mphreakmail needs a newer Docker version to work properly...\e[0m"
   echo -e "\e[31mPlease update your Docker installation... exiting\e[0m"
   exit 1
 fi
@@ -44,7 +44,7 @@ if docker compose > /dev/null 2>&1; then
       echo -e "\e[33mNotice: You'll have to update this Compose Version via your Package Manager manually!\e[0m"
     else
       echo -e "\e[31mCannot find Docker Compose with a Version Higher than 2.X.X.\e[0m"
-      echo -e "\e[31mPlease update/install it manually regarding to this doc site: https://docs.mailcow.email/install/\e[0m"
+      echo -e "\e[31mPlease update/install it manually regarding to this doc site: https://docs.phreakmail.com/install/\e[0m"
       exit 1
     fi
 elif docker-compose > /dev/null 2>&1; then
@@ -57,14 +57,14 @@ elif docker-compose > /dev/null 2>&1; then
       echo -e "\e[33mNotice: For an automatic update of docker-compose please use the update_compose.sh scripts located at the helper-scripts folder.\e[0m"
     else
       echo -e "\e[31mCannot find Docker Compose with a Version Higher than 2.X.X.\e[0m"
-      echo -e "\e[31mPlease update/install manually regarding to this doc site: https://docs.mailcow.email/install/\e[0m"
+      echo -e "\e[31mPlease update/install manually regarding to this doc site: https://docs.phreakmail.com/install/\e[0m"
       exit 1
     fi
   fi
 
 else
   echo -e "\e[31mCannot find Docker Compose.\e[0m"
-  echo -e "\e[31mPlease install it regarding to this doc site: https://docs.mailcow.email/install/\e[0m"
+  echo -e "\e[31mPlease install it regarding to this doc site: https://docs.phreakmail.com/install/\e[0m"
   exit 1
 fi
 
@@ -74,7 +74,7 @@ detect_bad_asn() {
   if [ "$response" -eq 503 ]; then
     if [ -z "$SPAMHAUS_DQS_KEY" ]; then
       echo -e "\e[33mYour server's public IP uses an AS that is blocked by Spamhaus to use their DNS public blocklists for Postfix.\e[0m"
-      echo -e "\e[33mmailcow did not detected a value for the variable SPAMHAUS_DQS_KEY inside mailcow.conf!\e[0m"
+      echo -e "\e[33mphreakmail did not detected a value for the variable SPAMHAUS_DQS_KEY inside phreakmail.conf!\e[0m"
       sleep 2
       echo ""
       echo -e "\e[33mTo use the Spamhaus DNS Blocklists again, you will need to create a FREE account for their Data Query Service (DQS) at: https://www.spamhaus.com/free-trial/sign-up-for-a-free-data-query-service-account\e[0m"
@@ -84,7 +84,7 @@ detect_bad_asn() {
 
     else
       echo -e "\e[33mYour server's public IP uses an AS that is blocked by Spamhaus to use their DNS public blocklists for Postfix.\e[0m"
-      echo -e "\e[32mmailcow detected a Value for the variable SPAMHAUS_DQS_KEY inside mailcow.conf. Postfix will use DQS with the given API key...\e[0m"
+      echo -e "\e[32mphreakmail detected a Value for the variable SPAMHAUS_DQS_KEY inside phreakmail.conf. Postfix will use DQS with the given API key...\e[0m"
     fi
   elif [ "$response" -eq 200 ]; then
     echo -e "\e[33mCheck completed! Your IP is \e[32mclean\e[0m"
@@ -102,12 +102,12 @@ else
   SKIP_BRANCH=n
 fi
 
-if [ -f mailcow.conf ]; then
+if [ -f phreakmail.conf ]; then
   read -r -p "A config file exists and will be overwritten, are you sure you want to continue? [y/N] " response
   case $response in
     [yY][eE][sS]|[yY])
-      mv mailcow.conf mailcow.conf_backup
-      chmod 600 mailcow.conf_backup
+      mv phreakmail.conf phreakmail.conf_backup
+      chmod 600 phreakmail.conf_backup
       ;;
     *)
       exit 1
@@ -116,20 +116,20 @@ if [ -f mailcow.conf ]; then
 fi
 
 echo "Press enter to confirm the detected value '[value]' where applicable or enter a custom value."
-while [ -z "${MAILCOW_HOSTNAME}" ]; do
-  read -p "Mail server hostname (FQDN) - this is not your mail domain, but your mail servers hostname: " -e MAILCOW_HOSTNAME
-  DOTS=${MAILCOW_HOSTNAME//[^.]};
+while [ -z "${PHREAKMAIL_HOSTNAME}" ]; do
+  read -p "Mail server hostname (FQDN) - this is not your mail domain, but your mail servers hostname: " -e PHREAKMAIL_HOSTNAME
+  DOTS=${PHREAKMAIL_HOSTNAME//[^.]};
   if [ ${#DOTS} -lt 1 ]; then
-    echo -e "\e[31mMAILCOW_HOSTNAME (${MAILCOW_HOSTNAME}) is not a FQDN!\e[0m"
+    echo -e "\e[31mPHREAKMAIL_HOSTNAME (${PHREAKMAIL_HOSTNAME}) is not a FQDN!\e[0m"
     sleep 1
     echo "Please change it to a FQDN and redeploy the stack with docker(-)compose up -d"
     exit 1
-  elif [[ "${MAILCOW_HOSTNAME: -1}" == "." ]]; then
-    echo "MAILCOW_HOSTNAME (${MAILCOW_HOSTNAME}) is ending with a dot. This is not a valid FQDN!"
+  elif [[ "${PHREAKMAIL_HOSTNAME: -1}" == "." ]]; then
+    echo "PHREAKMAIL_HOSTNAME (${PHREAKMAIL_HOSTNAME}) is ending with a dot. This is not a valid FQDN!"
     exit 1
   elif [ ${#DOTS} -eq 1 ]; then
-    echo -e "\e[33mMAILCOW_HOSTNAME (${MAILCOW_HOSTNAME}) does not contain a Subdomain. This is not fully tested and may cause issues.\e[0m"
-    echo "Find more information about why this message exists here: https://github.com/mailcow/mailcow-dockerized/issues/1572"
+    echo -e "\e[33mPHREAKMAIL_HOSTNAME (${PHREAKMAIL_HOSTNAME}) does not contain a Subdomain. This is not fully tested and may cause issues.\e[0m"
+    echo "Find more information about why this message exists here: https://github.com/phreak/phreakmail/issues/1572"
     read -r -p "Do you want to proceed anyway? [y/N] " response
     if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
       echo "OK. Procceding."
@@ -146,12 +146,12 @@ elif [ -a /etc/localtime ]; then
   DETECTED_TZ=$(readlink /etc/localtime|sed -n 's|^.*zoneinfo/||p')
 fi
 
-while [ -z "${MAILCOW_TZ}" ]; do
+while [ -z "${PHREAKMAIL_TZ}" ]; do
   if [ -z "${DETECTED_TZ}" ]; then
-    read -p "Timezone: " -e MAILCOW_TZ
+    read -p "Timezone: " -e PHREAKMAIL_TZ
   else
-    read -p "Timezone [${DETECTED_TZ}]: " -e MAILCOW_TZ
-    [ -z "${MAILCOW_TZ}" ] && MAILCOW_TZ=${DETECTED_TZ}
+    read -p "Timezone [${DETECTED_TZ}]: " -e PHREAKMAIL_TZ
+    [ -z "${PHREAKMAIL_TZ}" ] && PHREAKMAIL_TZ=${DETECTED_TZ}
   fi
 done
 
@@ -160,7 +160,7 @@ MEM_TOTAL=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
 if [ -z "${SKIP_CLAMD}" ]; then
   if [ "${MEM_TOTAL}" -le "2621440" ]; then
     echo "Installed memory is <= 2.5 GiB. It is recommended to disable ClamAV to prevent out-of-memory situations."
-    echo "ClamAV can be re-enabled by setting SKIP_CLAMD=n in mailcow.conf."
+    echo "ClamAV can be re-enabled by setting SKIP_CLAMD=n in phreakmail.conf."
     read -r -p  "Do you want to disable ClamAV now? [Y/n] " response
     case $response in
       [nN][oO]|[nN])
@@ -176,7 +176,7 @@ if [ -z "${SKIP_CLAMD}" ]; then
 fi
 
 if [[ ${SKIP_BRANCH} != y ]]; then
-  echo "Which branch of mailcow do you want to use?"
+  echo "Which branch of phreakmail do you want to use?"
   echo ""
   echo "Available Branches:"
   echo "- master branch (stable updates) | default, recommended [1]"
@@ -184,28 +184,28 @@ if [[ ${SKIP_BRANCH} != y ]]; then
   echo "- legacy branch (supported until February 2026) | deprecated, security updates only [3]"
   sleep 1
 
-  while [ -z "${MAILCOW_BRANCH}" ]; do
+  while [ -z "${PHREAKMAIL_BRANCH}" ]; do
     read -r -p  "Choose the Branch with it's number [1/2/3] " branch
     case $branch in
       [3])
-        MAILCOW_BRANCH="legacy"
+        PHREAKMAIL_BRANCH="legacy"
         ;;
       [2])
-        MAILCOW_BRANCH="nightly"
+        PHREAKMAIL_BRANCH="nightly"
         ;;
       *)
-        MAILCOW_BRANCH="master"
+        PHREAKMAIL_BRANCH="master"
       ;;
     esac
   done
 
   git fetch --all
-  git checkout -f "$MAILCOW_BRANCH"
+  git checkout -f "$PHREAKMAIL_BRANCH"
 
 elif [[ ${SKIP_BRANCH} == y ]]; then
   echo -e "\033[33mEnabled Dev Mode.\033[0m"
   echo -e "\033[33mNot checking out a different branch!\033[0m"
-  MAILCOW_BRANCH=$(git rev-parse --short $(git rev-parse @{upstream}))
+  PHREAKMAIL_BRANCH=$(git rev-parse --short $(git rev-parse @{upstream}))
 
 else
   echo -e "\033[31mCould not determine branch input..."
@@ -213,13 +213,13 @@ else
   exit 1
 fi
 
-if [ ! -z "${MAILCOW_BRANCH}" ]; then
-  git_branch=${MAILCOW_BRANCH}
+if [ ! -z "${PHREAKMAIL_BRANCH}" ]; then
+  git_branch=${PHREAKMAIL_BRANCH}
 fi
 
 [ ! -f ./data/conf/rspamd/override.d/worker-controller-password.inc ] && echo '# Placeholder' > ./data/conf/rspamd/override.d/worker-controller-password.inc
 
-cat << EOF > mailcow.conf
+cat << EOF > phreakmail.conf
 # ------------------------------
 # mailcow web ui configuration
 # ------------------------------
@@ -227,7 +227,7 @@ cat << EOF > mailcow.conf
 # Default admin user is "admin"
 # Default password is "moohoo"
 
-MAILCOW_HOSTNAME=${MAILCOW_HOSTNAME}
+PHREAKMAIL_HOSTNAME=${PHREAKMAIL_HOSTNAME}
 
 # Password hash algorithm
 # Only certain password hash algorithm are supported. For a fully list of supported schemes,
@@ -238,8 +238,8 @@ MAILCOW_PASS_SCHEME=BLF-CRYPT
 # SQL database configuration
 # ------------------------------
 
-DBNAME=mailcow
-DBUSER=mailcow
+DBNAME=phreakmail
+DBUSER=phreakmail
 
 # Please use long, random alphanumeric strings (A-Za-z0-9)
 
@@ -296,12 +296,12 @@ REDIS_PORT=127.0.0.1:7654
 # See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for a list of timezones
 # Use the column named 'TZ identifier' + pay attention for the column named 'Notes'
 
-TZ=${MAILCOW_TZ}
+TZ=${PHREAKMAIL_TZ}
 
 # Fixed project name
 # Please use lowercase letters only
 
-COMPOSE_PROJECT_NAME=mailcowdockerized
+COMPOSE_PROJECT_NAME=phreakmaildockerized
 
 # Used Docker Compose version
 # Switch here between native (compose plugin) and standalone
@@ -313,7 +313,7 @@ DOCKER_COMPOSE_VERSION=${COMPOSE_VERSION}
 
 # Set this to "allow" to enable the anyone pseudo user. Disabled by default.
 # When enabled, ACL can be created, that apply to "All authenticated users"
-# This should probably only be activated on mail hosts, that are used exclusivly by one organisation.
+# This should probably only be activated on mail hosts, that are used exclusively by one organisation.
 # Otherwise a user might share data with too many other users.
 ACL_ANYONE=disallow
 
@@ -415,7 +415,7 @@ ALLOW_ADMIN_EMAIL_LOGIN=n
 
 USE_WATCHDOG=y
 
-# Send watchdog notifications by mail (sent from watchdog@MAILCOW_HOSTNAME)
+# Send watchdog notifications by mail (sent from watchdog@PHREAKMAIL_HOSTNAME)
 # CAUTION:
 # 1. You should use external recipients
 # 2. Mails are sent unsigned (no DKIM)
@@ -430,7 +430,7 @@ USE_WATCHDOG=y
 #WATCHDOG_NOTIFY_WEBHOOK=https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # JSON body included in the webhook POST request. Needs to be in single quotes.
 # Following variables are available: SUBJECT, BODY
-#WATCHDOG_NOTIFY_WEBHOOK_BODY='{"username": "mailcow Watchdog", "content": "**${SUBJECT}**\n${BODY}"}'
+#WATCHDOG_NOTIFY_WEBHOOK_BODY='{"username": "phreakmail Watchdog", "content": "**${SUBJECT}**\n${BODY}"}'
 
 # Notify about banned IP (includes whois lookup)
 WATCHDOG_NOTIFY_BAN=n
@@ -441,11 +441,11 @@ WATCHDOG_NOTIFY_START=y
 # Subject for watchdog mails. Defaults to "Watchdog ALERT" followed by the error message.
 #WATCHDOG_SUBJECT=
 
-# Checks if mailcow is an open relay. Requires a SAL. More checks will follow.
-# https://www.servercow.de/mailcow?lang=en
-# https://www.servercow.de/mailcow?lang=de
+# Checks if phreakmail is an open relay. Requires a SAL. More checks will follow.
+# https://www.servercow.de/phreakmail?lang=en
+# https://www.servercow.de/phreakmail?lang=de
 # No data is collected. Opt-in and anonymous.
-# Will only work with unmodified mailcow setups.
+# Will only work with unmodified phreakmail setups.
 WATCHDOG_EXTERNAL_CHECKS=n
 
 # Enable watchdog verbose logging
@@ -524,14 +524,64 @@ EOF
 
 mkdir -p data/assets/ssl
 
-chmod 600 mailcow.conf
+chmod 600 phreakmail.conf
 
 # copy but don't overwrite existing certificate
 echo "Generating snake-oil certificate..."
 # Making Willich more popular
-openssl req -x509 -newkey rsa:4096 -keyout data/assets/ssl-example/key.pem -out data/assets/ssl-example/cert.pem -days 365 -subj "/C=DE/ST=NRW/L=Willich/O=mailcow/OU=mailcow/CN=${MAILCOW_HOSTNAME}" -sha256 -nodes
+openssl req -x509 -newkey rsa:4096 -keyout data/assets/ssl-example/key.pem -out data/assets/ssl-example/cert.pem -days 365 -subj "/C=DE/ST=NRW/L=Willich/O=phreakmail/OU=phreakmail/CN=${PHREAKMAIL_HOSTNAME}" -sha256 -nodes
 echo "Copying snake-oil certificate..."
 cp -n -d data/assets/ssl-example/*.pem data/assets/ssl/
+
+# Set up Django web interface
+echo "Setting up Django web interface..."
+mkdir -p django_project
+cp -r data/conf/nginx/django.conf data/conf/nginx/site.conf
+
+# Add Django service to docker-compose.override.yml
+cat << EOF > docker-compose.override.yml
+version: '3'
+
+services:
+  django-phreakmail:
+    build:
+      context: ./django_project
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - mysql-phreakmail
+      - redis-phreakmail
+      - netfilter-phreakmail
+    environment:
+      - DB_NAME=\${DBNAME}
+      - DB_USER=\${DBUSER}
+      - DB_PASSWORD=\${DBPASS}
+      - DB_HOST=mysql-phreakmail
+      - DB_PORT=3306
+      - DJANGO_SETTINGS_MODULE=phreakmail.settings
+      - DJANGO_SECRET_KEY=\${DJANGO_SECRET_KEY:-change-this-in-production}
+      - DJANGO_DEBUG=\${DJANGO_DEBUG:-False}
+      - PHREAKMAIL_HOSTNAME=\${PHREAKMAIL_HOSTNAME}
+      - TZ=\${TZ}
+      - REDIS_HOST=redis-phreakmail
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=\${REDISPASS}
+      - ADDITIONAL_SERVER_NAMES=\${ADDITIONAL_SERVER_NAMES:-}
+    volumes:
+      - ./django_project:/app
+      - django-static:/app/staticfiles
+    command: >
+      bash -c "python manage.py migrate &&
+               python manage.py collectstatic --noinput &&
+               gunicorn phreakmail.wsgi:application --bind 0.0.0.0:8000"
+    networks:
+      phreakmail-network:
+        aliases:
+          - django-phreakmail
+
+volumes:
+  django-static:
+EOF
 
 # Set app_info.inc.php
 case ${git_branch} in
@@ -572,27 +622,27 @@ fi
 
 if [ $? -eq 0 ]; then
   echo '<?php' > data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_VERSION="'$mailcow_git_version'";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_LAST_GIT_VERSION="";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_OWNER="mailcow";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_REPO="mailcow-dockerized";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_URL="https://github.com/mailcow/mailcow-dockerized";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_COMMIT="'$mailcow_git_commit'";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_COMMIT_DATE="'$mailcow_git_commit_date'";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_BRANCH="'$git_branch'";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_UPDATEDAT='$(date +%s)';' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_VERSION="2.0.0";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_LAST_GIT_VERSION="";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_OWNER="phreak";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_REPO="phreakmail";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_URL="https://github.com/phreak/phreakmail";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_COMMIT="'$mailcow_git_commit'";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_COMMIT_DATE="'$mailcow_git_commit_date'";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_BRANCH="'$git_branch'";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_UPDATEDAT='$(date +%s)';' >> data/web/inc/app_info.inc.php
   echo '?>' >> data/web/inc/app_info.inc.php
 else
   echo '<?php' > data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_VERSION="'$mailcow_git_version'";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_LAST_GIT_VERSION="";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_OWNER="mailcow";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_REPO="mailcow-dockerized";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_URL="https://github.com/mailcow/mailcow-dockerized";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_COMMIT="";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_GIT_COMMIT_DATE="";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_BRANCH="'$git_branch'";' >> data/web/inc/app_info.inc.php
-  echo '  $MAILCOW_UPDATEDAT='$(date +%s)';' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_VERSION="1.0.0";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_LAST_GIT_VERSION="";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_OWNER="phreak";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_REPO="phreakmail";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_URL="https://github.com/phreak/phreakmail";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_COMMIT="";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_GIT_COMMIT_DATE="";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_BRANCH="'$git_branch'";' >> data/web/inc/app_info.inc.php
+  echo '  $PHREAKMAIL_UPDATEDAT='$(date +%s)';' >> data/web/inc/app_info.inc.php
   echo '?>' >> data/web/inc/app_info.inc.php
   echo -e "\e[33mCannot determine current git repository version...\e[0m"
 fi

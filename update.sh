@@ -36,14 +36,14 @@ docker_garbage() {
   IMGS_TO_DELETE=()
 
   declare -A IMAGES_INFO
-  COMPOSE_IMAGES=($(grep -oP "image: \K(ghcr\.io/)?mailcow.+" "${SCRIPT_DIR}/docker-compose.yml"))
+  COMPOSE_IMAGES=($(grep -oP "image: \K(ghcr\.io/)?phreak.+" "${SCRIPT_DIR}/docker-compose.yml"))
 
-  for existing_image in $(docker images --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep -E '(mailcow/|ghcr\.io/mailcow/)'); do
+  for existing_image in $(docker images --format "{{.ID}}:{{.Repository}}:{{.Tag}}" | grep -E '(phreak/|ghcr\.io/phreak/)'); do
       ID=$(echo "$existing_image" | cut -d ':' -f 1)
       REPOSITORY=$(echo "$existing_image" | cut -d ':' -f 2)
       TAG=$(echo "$existing_image" | cut -d ':' -f 3)
 
-      if [[ "$REPOSITORY" == "mailcow/backup" || "$REPOSITORY" == "ghcr.io/mailcow/backup" ]]; then
+      if [[ "$REPOSITORY" == "phreak/backup" || "$REPOSITORY" == "ghcr.io/phreak/backup" ]]; then
           if [[ "$TAG" != "<none>" ]]; then
               continue
           fi
@@ -58,7 +58,7 @@ docker_garbage() {
   done
 
   if [[ ! -z ${IMGS_TO_DELETE[*]} ]]; then
-      echo "The following unused mailcow images were found:"
+      echo "The following unused phreakmail images were found:"
       for id in "${IMGS_TO_DELETE[@]}"; do
           echo "    ${IMAGES_INFO[$id]} ($id)"
       done
@@ -71,7 +71,7 @@ docker_garbage() {
               echo "OK, skipped."
           fi
       else
-          echo "Running in forced mode! Force removing old mailcow images..."
+          echo "Running in forced mode! Force removing old phreakmail images..."
           docker rmi ${IMGS_TO_DELETE[*]}
       fi
       echo -e "\e[32mFurther cleanup...\e[0m"
@@ -92,7 +92,7 @@ migrate_docker_nat() {
   DOCKERV_REQ=20.10.2
   # Current Docker version
   DOCKERV_CUR=$(docker version -f '{{.Server.Version}}')
-  if grep -qi "ipv6nat-mailcow" docker-compose.yml && grep -qi "enable_ipv6: true" docker-compose.yml; then
+  if grep -qi "ipv6nat-phreakmail" docker-compose.yml && grep -qi "enable_ipv6: true" docker-compose.yml; then
     echo -e "\e[32mNative IPv6 implementation available.\e[0m"
     echo "This will enable experimental features in the Docker daemon and configure Docker to do the IPv6 NATing instead of ipv6nat-mailcow."
     echo '!!! This step is recommended !!!'
@@ -136,9 +136,9 @@ migrate_docker_nat() {
       fi
     fi
     # Removing legacy container
-    sed -i '/ipv6nat-mailcow:$/,/^$/d' docker-compose.yml
+    sed -i '/ipv6nat-phreakmail:$/,/^$/d' docker-compose.yml
     if [ -s docker-compose.override.yml ]; then
-        sed -i '/ipv6nat-mailcow:$/,/^$/d' docker-compose.override.yml
+        sed -i '/ipv6nat-phreakmail:$/,/^$/d' docker-compose.override.yml
         if [[ "$(cat docker-compose.override.yml | sed '/^\s*$/d' | wc -l)" == "2" ]]; then
             mv docker-compose.override.yml docker-compose.override.yml_backup
         fi
@@ -154,7 +154,7 @@ remove_obsolete_nginx_ports() {
     # Removing obsolete docker-compose.override.yml
     for override in docker-compose.override.yml docker-compose.override.yaml; do
     if [ -s $override ] ; then
-        if cat $override | grep nginx-mailcow > /dev/null 2>&1; then
+        if cat $override | grep nginx-phreakmail > /dev/null 2>&1; then
           if cat $override | grep -E '(\[::])' > /dev/null 2>&1; then
             if cat $override | grep -w 80:80 > /dev/null 2>&1 && cat $override | grep -w 443:443 > /dev/null 2>&1 ; then
               echo -e "\e[33mBacking up ${override} to preserve custom changes...\e[0m"
@@ -182,12 +182,12 @@ if ! [[ "${DOCKER_COMPOSE_VERSION}" =~ ^(native|standalone)$ ]]; then
         COMPOSE_COMMAND="docker compose"
         echo -e "\e[33mFound Docker Compose Plugin (native).\e[0m"
         echo -e "\e[33mSetting the DOCKER_COMPOSE_VERSION Variable to native\e[0m"
-        sed -i 's/^DOCKER_COMPOSE_VERSION=.*/DOCKER_COMPOSE_VERSION=native/' "$SCRIPT_DIR/mailcow.conf"
+        sed -i 's/^DOCKER_COMPOSE_VERSION=.*/DOCKER_COMPOSE_VERSION=native/' "$SCRIPT_DIR/phreakmail.conf"
         sleep 2
         echo -e "\e[33mNotice: You'll have to update this Compose Version via your Package Manager manually!\e[0m"
       else
         echo -e "\e[31mCannot find Docker Compose with a Version Higher than 2.X.X.\e[0m"
-        echo -e "\e[31mPlease update/install it manually regarding to this doc site: https://docs.mailcow.email/install/\e[0m"
+        echo -e "\e[31mPlease update/install it manually regarding to this doc site: https://docs.phreakmail.com/install/\e[0m"
         exit 1
       fi
   elif docker-compose > /dev/null 2>&1; then
@@ -197,19 +197,19 @@ if ! [[ "${DOCKER_COMPOSE_VERSION}" =~ ^(native|standalone)$ ]]; then
         COMPOSE_COMMAND="docker-compose"
         echo -e "\e[33mFound Docker Compose Standalone.\e[0m"
         echo -e "\e[33mSetting the DOCKER_COMPOSE_VERSION Variable to standalone\e[0m"
-        sed -i 's/^DOCKER_COMPOSE_VERSION=.*/DOCKER_COMPOSE_VERSION=standalone/' "$SCRIPT_DIR/mailcow.conf"
+        sed -i 's/^DOCKER_COMPOSE_VERSION=.*/DOCKER_COMPOSE_VERSION=standalone/' "$SCRIPT_DIR/phreakmail.conf"
         sleep 2
         echo -e "\e[33mNotice: For an automatic update of docker-compose please use the update_compose.sh scripts located at the helper-scripts folder.\e[0m"
       else
         echo -e "\e[31mCannot find Docker Compose with a Version Higher than 2.X.X.\e[0m"
-        echo -e "\e[31mPlease update/install regarding to this doc site: https://docs.mailcow.email/install/\e[0m"
+        echo -e "\e[31mPlease update/install regarding to this doc site: https://docs.phreakmail.com/install/\e[0m"
         exit 1
       fi
     fi
 
   else
     echo -e "\e[31mCannot find Docker Compose.\e[0m"
-    echo -e "\e[31mPlease install it regarding to this doc site: https://docs.mailcow.email/install/\e[0m"
+    echo -e "\e[31mPlease install it regarding to this doc site: https://docs.phreakmail.com/install/\e[0m"
     exit 1
   fi
 
@@ -222,13 +222,13 @@ elif [ "${DOCKER_COMPOSE_VERSION}" == "native" ]; then
     if ! $COMPOSE_COMMAND > /dev/null 2>&1 || ! $COMPOSE_COMMAND --version | grep "^2." > /dev/null 2>&1; then
       # IF it cannot find Standalone in > 2.X, then script stops
       echo -e "\e[31mCannot find Docker Compose or the Version is lower then 2.X.X.\e[0m"
-      echo -e "\e[31mPlease install it regarding to this doc site: https://docs.mailcow.email/install/\e[0m"
+      echo -e "\e[31mPlease install it regarding to this doc site: https://docs.phreakmail.com/install/\e[0m"
       exit 1
     fi
       # If it finds the standalone Plugin it will use this instead and change the mailcow.conf Variable accordingly
-      echo -e "\e[31mFound different Docker Compose Version then declared in mailcow.conf!\e[0m"
+      echo -e "\e[31mFound different Docker Compose Version then declared in phreakmail.conf!\e[0m"
       echo -e "\e[31mSetting the DOCKER_COMPOSE_VERSION Variable from native to standalone\e[0m"
-      sed -i 's/^DOCKER_COMPOSE_VERSION=.*/DOCKER_COMPOSE_VERSION=standalone/' "$SCRIPT_DIR/mailcow.conf"
+      sed -i 's/^DOCKER_COMPOSE_VERSION=.*/DOCKER_COMPOSE_VERSION=standalone/' "$SCRIPT_DIR/phreakmail.conf"
       sleep 2
   fi
 
@@ -246,9 +246,9 @@ elif [ "${DOCKER_COMPOSE_VERSION}" == "standalone" ]; then
       exit 1
     fi
       # If it finds the native Plugin it will use this instead and change the mailcow.conf Variable accordingly
-      echo -e "\e[31mFound different Docker Compose Version then declared in mailcow.conf!\e[0m"
+      echo -e "\e[31mFound different Docker Compose Version then declared in phreakmail.conf!\e[0m"
       echo -e "\e[31mSetting the DOCKER_COMPOSE_VERSION Variable from standalone to native\e[0m"
-      sed -i 's/^DOCKER_COMPOSE_VERSION=.*/DOCKER_COMPOSE_VERSION=native/' "$SCRIPT_DIR/mailcow.conf"
+      sed -i 's/^DOCKER_COMPOSE_VERSION=.*/DOCKER_COMPOSE_VERSION=native/' "$SCRIPT_DIR/phreakmail.conf"
       sleep 2
   fi
 fi
@@ -256,21 +256,21 @@ fi
 
 detect_bad_asn() {
   echo -e "\e[33mDetecting if your IP is listed on Spamhaus Bad ASN List...\e[0m"
-  response=$(curl --connect-timeout 15 --max-time 30 -s -o /dev/null -w "%{http_code}" "https://asn-check.mailcow.email")
+  response=$(curl --connect-timeout 15 --max-time 30 -s -o /dev/null -w "%{http_code}" "https://asn-check.phreakmail.com")
   if [ "$response" -eq 503 ]; then
     if [ -z "$SPAMHAUS_DQS_KEY" ]; then
       echo -e "\e[33mYour server's public IP uses an AS that is blocked by Spamhaus to use their DNS public blocklists for Postfix.\e[0m"
-      echo -e "\e[33mmailcow did not detected a value for the variable SPAMHAUS_DQS_KEY inside mailcow.conf!\e[0m"
+      echo -e "\e[33mphreakmail did not detected a value for the variable SPAMHAUS_DQS_KEY inside phreakmail.conf!\e[0m"
       sleep 2
       echo ""
       echo -e "\e[33mTo use the Spamhaus DNS Blocklists again, you will need to create a FREE account for their Data Query Service (DQS) at: https://www.spamhaus.com/free-trial/sign-up-for-a-free-data-query-service-account\e[0m"
-      echo -e "\e[33mOnce done, enter your DQS API key in mailcow.conf and mailcow will do the rest for you!\e[0m"
+      echo -e "\e[33mOnce done, enter your DQS API key in phreakmail.conf and phreakmail will do the rest for you!\e[0m"
       echo ""
       sleep 2
 
     else
       echo -e "\e[33mYour server's public IP uses an AS that is blocked by Spamhaus to use their DNS public blocklists for Postfix.\e[0m"
-      echo -e "\e[32mmailcow detected a Value for the variable SPAMHAUS_DQS_KEY inside mailcow.conf. Postfix will use DQS with the given API key...\e[0m"
+      echo -e "\e[32mphreakmail detected a Value for the variable SPAMHAUS_DQS_KEY inside phreakmail.conf. Postfix will use DQS with the given API key...\e[0m"
     fi
   elif [ "$response" -eq 200 ]; then
     echo -e "\e[33mCheck completed! Your IP is \e[32mclean\e[0m"
@@ -292,9 +292,9 @@ fix_broken_dnslist_conf() {
   fi
 
   # Check if the file contains the autogenerated comment
-  if grep -q "# Autogenerated by mailcow" "$file"; then
+  if grep -q "# Autogenerated by phreakmail" "$file"; then
       # Ask the user if custom changes were made
-      echo -e "\e[91mWARNING!!! \e[31mAn old version of dns_blocklists.cf has been detected which may cause a broken postfix upon startup (see: https://github.com/mailcow/mailcow-dockerized/issues/6143)...\e[0m"
+      echo -e "\e[91mWARNING!!! \e[31mAn old version of dns_blocklists.cf has been detected which may cause a broken postfix upon startup (see: https://github.com/phreak/phreakmail/issues/6143)...\e[0m"
       echo -e "\e[31mIf you have any custom settings in there you might copy it away and adapt the changes after the file is regenerated...\e[0m"
       read -p "Do you want to delete the file now and let mailcow regenerate it properly? [y/n]" response
       if [[ "${response}" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
@@ -663,34 +663,34 @@ migrate_solr_config_options() {
 
   sed -i --follow-symlinks '$a\' mailcow.conf
 
-  if grep -q "SOLR_HEAP" mailcow.conf; then
-    echo "Removing SOLR_HEAP in mailcow.conf"
-    sed -i '/# Solr heap size in MB\b/d' mailcow.conf
-    sed -i '/# Solr is a prone to run\b/d' mailcow.conf
-    sed -i '/SOLR_HEAP\b/d' mailcow.conf
+  if grep -q "SOLR_HEAP" phreakmail.conf; then
+    echo "Removing SOLR_HEAP in phreakmail.conf"
+    sed -i '/# Solr heap size in MB\b/d' phreakmail.conf
+    sed -i '/# Solr is a prone to run\b/d' phreakmail.conf
+    sed -i '/SOLR_HEAP\b/d' phreakmail.conf
   fi
 
-  if grep -q "SKIP_SOLR" mailcow.conf; then
-    echo "Removing SKIP_SOLR in mailcow.conf"
-    sed -i '/\bSkip Solr on low-memory\b/d' mailcow.conf
-    sed -i '/\bSolr is disabled by default\b/d' mailcow.conf
-    sed -i '/\bDisable Solr or\b/d' mailcow.conf
-    sed -i '/\bSKIP_SOLR\b/d' mailcow.conf
+  if grep -q "SKIP_SOLR" phreakmail.conf; then
+    echo "Removing SKIP_SOLR in phreakmail.conf"
+    sed -i '/\bSkip Solr on low-memory\b/d' phreakmail.conf
+    sed -i '/\bSolr is disabled by default\b/d' phreakmail.conf
+    sed -i '/\bDisable Solr or\b/d' phreakmail.conf
+    sed -i '/\bSKIP_SOLR\b/d' phreakmail.conf
   fi
 
-  if grep -q "SOLR_PORT" mailcow.conf; then
-    echo "Removing SOLR_PORT in mailcow.conf"
-    sed -i '/\bSOLR_PORT\b/d' mailcow.conf
+  if grep -q "SOLR_PORT" phreakmail.conf; then
+    echo "Removing SOLR_PORT in phreakmail.conf"
+    sed -i '/\bSOLR_PORT\b/d' phreakmail.conf
   fi
 
-  if grep -q "FLATCURVE_EXPERIMENTAL" mailcow.conf; then
-    echo "Removing FLATCURVE_EXPERIMENTAL in mailcow.conf"
-    sed -i '/\bFLATCURVE_EXPERIMENTAL\b/d' mailcow.conf
+  if grep -q "FLATCURVE_EXPERIMENTAL" phreakmail.conf; then
+    echo "Removing FLATCURVE_EXPERIMENTAL in phreakmail.conf"
+    sed -i '/\bFLATCURVE_EXPERIMENTAL\b/d' phreakmail.conf
   fi
 
   solr_volume=$(docker volume ls -qf name=^${COMPOSE_PROJECT_NAME}_solr-vol-1)
   if [[ -n $solr_volume ]]; then
-    echo -e "\e[34mSolr has been replaced within mailcow since 2025-01.\nThe volume $solr_volume is unused.\e[0m"
+    echo -e "\e[34mSolr has been replaced within phreakmail since 2025-01.\nThe volume $solr_volume is unused.\e[0m"
     sleep 1
     if [ ! "$FORCE" ]; then
       read -r -p "Remove $solr_volume? [y/N] " response
@@ -722,18 +722,17 @@ detect_major_update() {
     # Array with major versions
     # Add major versions here
     MAJOR_VERSIONS=(
-      "2025-02"
-      "2025-03"
+      "1.0.0"
     )
 
     current_version=""
     if [[ -f "${SCRIPT_DIR}/data/web/inc/app_info.inc.php" ]]; then
-      current_version=$(grep 'MAILCOW_GIT_VERSION' ${SCRIPT_DIR}/data/web/inc/app_info.inc.php | sed -E 's/.*MAILCOW_GIT_VERSION="([^"]+)".*/\1/')
+      current_version=$(grep 'PHREAKMAIL_GIT_VERSION' ${SCRIPT_DIR}/data/web/inc/app_info.inc.php | sed -E 's/.*PHREAKMAIL_GIT_VERSION="([^"]+)".*/\1/')
     fi
     if [[ -z "$current_version" ]]; then
       return 1
     fi
-    release_url="https://github.com/mailcow/mailcow-dockerized/releases/tag"
+    release_url="https://github.com/phreak/phreakmail/releases/tag"
 
     updates_to_apply=()
 
@@ -777,18 +776,18 @@ if [ -f "${SCRIPT_DIR}/pre_update_hook.sh" ]; then
 fi
 
 if [[ "$(uname -r)" =~ ^4\.15\.0-60 ]]; then
-  echo "DO NOT RUN mailcow ON THIS UBUNTU KERNEL!";
+  echo "DO NOT RUN phreakmail ON THIS UBUNTU KERNEL!";
   echo "Please update to 5.x or use another distribution."
   exit 1
 fi
 
 if [[ "$(uname -r)" =~ ^4\.4\. ]]; then
   if grep -q Ubuntu <<< "$(uname -a)"; then
-    echo "DO NOT RUN mailcow ON THIS UBUNTU KERNEL!"
+    echo "DO NOT RUN phreakmail ON THIS UBUNTU KERNEL!"
     echo "Please update to linux-generic-hwe-16.04 by running \"apt-get install --install-recommends linux-generic-hwe-16.04\""
     exit 1
   fi
-  echo "mailcow on a 4.4.x kernel is not supported. It may or may not work, please upgrade your kernel or continue at your own risk."
+  echo "phreakmail on a 4.4.x kernel is not supported. It may or may not work, please upgrade your kernel or continue at your own risk."
   read -p "Press any key to continue..." < /dev/tty
 fi
 
@@ -819,7 +818,7 @@ docker_version=$(docker -v | grep -oP '\d+\.\d+\.\d+' | cut -d '.' -f 1 | head -
 
 if [[ $docker_version -lt 24 ]]; then
   echo -e "\e[31mCannot find Docker with a Version higher or equals 24.0.0\e[0m"
-  echo -e "\e[33mmailcow needs a newer Docker version to work properly... continuing on your own risk!\e[0m"
+  echo -e "\e[33mphreakmail needs a newer Docker version to work properly... continuing on your own risk!\e[0m"
   echo -e "\e[31mPlease update your Docker installation... sleeping 10s\e[0m"
   sleep 10
 fi
@@ -921,27 +920,27 @@ while (($#)); do
   shift
 done
 
-[[ ! -f mailcow.conf ]] && { echo -e "\e[31mmailcow.conf is missing! Is mailcow installed?\e[0m"; exit 1;}
+[[ ! -f phreakmail.conf ]] && { echo -e "\e[31mphreakmail.conf is missing! Is phreakmail installed?\e[0m"; exit 1;}
 
-chmod 600 mailcow.conf
-source mailcow.conf
+chmod 600 phreakmail.conf
+source phreakmail.conf
 
 detect_docker_compose_command
 
 fix_broken_dnslist_conf
 
-DOTS=${MAILCOW_HOSTNAME//[^.]};
+DOTS=${PHREAKMAIL_HOSTNAME//[^.]};
 if [ ${#DOTS} -lt 1 ]; then
-  echo -e "\e[31mMAILCOW_HOSTNAME (${MAILCOW_HOSTNAME}) is not a FQDN!\e[0m"
+  echo -e "\e[31mPHREAKMAIL_HOSTNAME (${PHREAKMAIL_HOSTNAME}) is not a FQDN!\e[0m"
   sleep 1
   echo "Please change it to a FQDN and redeploy the stack with $COMPOSE_COMMAND up -d"
   exit 1
-elif [[ "${MAILCOW_HOSTNAME: -1}" == "." ]]; then
-  echo "MAILCOW_HOSTNAME (${MAILCOW_HOSTNAME}) is ending with a dot. This is not a valid FQDN!"
+elif [[ "${PHREAKMAIL_HOSTNAME: -1}" == "." ]]; then
+  echo "PHREAKMAIL_HOSTNAME (${PHREAKMAIL_HOSTNAME}) is ending with a dot. This is not a valid FQDN!"
   exit 1
 elif [ ${#DOTS} -eq 1 ]; then
-  echo -e "\e[33mMAILCOW_HOSTNAME (${MAILCOW_HOSTNAME}) does not contain a Subdomain. This is not fully tested and may cause issues.\e[0m"
-  echo "Find more information about why this message exists here: https://github.com/mailcow/mailcow-dockerized/issues/1572"
+  echo -e "\e[33mPHREAKMAIL_HOSTNAME (${PHREAKMAIL_HOSTNAME}) does not contain a Subdomain. This is not fully tested and may cause issues.\e[0m"
+  echo "Find more information about why this message exists here: https://github.com/phreak/phreakmail/issues/1572"
   read -r -p "Do you want to proceed anyway? [y/N] " response
   if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
     echo "OK. Proceeding."
@@ -1007,74 +1006,74 @@ CONFIG_ARRAY=(
 
 detect_bad_asn
 
-sed -i --follow-symlinks '$a\' mailcow.conf
+sed -i --follow-symlinks '$a\' phreakmail.conf
 for option in "${CONFIG_ARRAY[@]}"; do
   if [[ ${option} == "ADDITIONAL_SAN" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo "${option}=" >> mailcow.conf
+  if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo "${option}=" >> phreakmail.conf
     fi
   elif [[ "${option}" == "COMPOSE_PROJECT_NAME" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo "COMPOSE_PROJECT_NAME=mailcowdockerized" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo "COMPOSE_PROJECT_NAME=phreakmaildockerized" >> phreakmail.conf
     fi
   elif [[ "${option}" == "DOCKER_COMPOSE_VERSION" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo "# Used Docker Compose version" >> mailcow.conf
-      echo "# Switch here between native (compose plugin) and standalone" >> mailcow.conf
-      echo "# For more informations take a look at the mailcow docs regarding the configuration options." >> mailcow.conf
-      echo "# Normally this should be untouched but if you decided to use either of those you can switch it manually here." >> mailcow.conf
-      echo "# Please be aware that at least one of those variants should be installed on your maschine or mailcow will fail." >> mailcow.conf
-      echo "" >> mailcow.conf
-      echo "DOCKER_COMPOSE_VERSION=${DOCKER_COMPOSE_VERSION}" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo "# Used Docker Compose version" >> phreakmail.conf
+      echo "# Switch here between native (compose plugin) and standalone" >> phreakmail.conf
+      echo "# For more informations take a look at the phreakmail docs regarding the configuration options." >> phreakmail.conf
+      echo "# Normally this should be untouched but if you decided to use either of those you can switch it manually here." >> phreakmail.conf
+      echo "# Please be aware that at least one of those variants should be installed on your maschine or phreakmail will fail." >> phreakmail.conf
+      echo "" >> phreakmail.conf
+      echo "DOCKER_COMPOSE_VERSION=${DOCKER_COMPOSE_VERSION}" >> phreakmail.conf
     fi
   elif [[ "${option}" == "DOVEADM_PORT" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo "DOVEADM_PORT=127.0.0.1:19991" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo "DOVEADM_PORT=127.0.0.1:19991" >> phreakmail.conf
     fi
   elif [[ "${option}" == "WATCHDOG_NOTIFY_EMAIL" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo "WATCHDOG_NOTIFY_EMAIL=" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo "WATCHDOG_NOTIFY_EMAIL=" >> phreakmail.conf
     fi
   elif [[ "${option}" == "LOG_LINES" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo '# Max log lines per service to keep in Redis logs' >> mailcow.conf
-      echo "LOG_LINES=9999" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo '# Max log lines per service to keep in Redis logs' >> phreakmail.conf
+      echo "LOG_LINES=9999" >> phreakmail.conf
     fi
   elif [[ "${option}" == "IPV4_NETWORK" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo '# Internal IPv4 /24 subnet, format n.n.n. (expands to n.n.n.0/24)' >> mailcow.conf
-      echo "IPV4_NETWORK=172.22.1" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo '# Internal IPv4 /24 subnet, format n.n.n. (expands to n.n.n.0/24)' >> phreakmail.conf
+      echo "IPV4_NETWORK=172.22.1" >> phreakmail.conf
     fi
   elif [[ "${option}" == "IPV6_NETWORK" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo '# Internal IPv6 subnet in fc00::/7' >> mailcow.conf
-      echo "IPV6_NETWORK=fd4d:6169:6c63:6f77::/64" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo '# Internal IPv6 subnet in fc00::/7' >> phreakmail.conf
+      echo "IPV6_NETWORK=fd4d:6169:6c63:6f77::/64" >> phreakmail.conf
     fi
   elif [[ "${option}" == "SQL_PORT" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo '# Bind SQL to 127.0.0.1 on port 13306' >> mailcow.conf
-      echo "SQL_PORT=127.0.0.1:13306" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo '# Bind SQL to 127.0.0.1 on port 13306' >> phreakmail.conf
+      echo "SQL_PORT=127.0.0.1:13306" >> phreakmail.conf
     fi
   elif [[ "${option}" == "API_KEY" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo '# Create or override API key for web UI' >> mailcow.conf
-      echo "#API_KEY=" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo '# Create or override API key for web UI' >> phreakmail.conf
+      echo "#API_KEY=" >> phreakmail.conf
     fi
   elif [[ "${option}" == "API_KEY_READ_ONLY" ]]; then
-    if ! grep -q "${option}" mailcow.conf; then
-      echo "Adding new option \"${option}\" to mailcow.conf"
-      echo '# Create or override read-only API key for web UI' >> mailcow.conf
-      echo "#API_KEY_READ_ONLY=" >> mailcow.conf
+    if ! grep -q "${option}" phreakmail.conf; then
+      echo "Adding new option \"${option}\" to phreakmail.conf"
+      echo '# Create or override read-only API key for web UI' >> phreakmail.conf
+      echo "#API_KEY_READ_ONLY=" >> phreakmail.conf
     fi
   elif [[ "${option}" == "API_ALLOW_FROM" ]]; then
     if ! grep -q "${option}" mailcow.conf; then

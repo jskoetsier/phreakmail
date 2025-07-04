@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_NAME=phreakmail
+      - DB_USER=phreakmail
+      - DB_PASSWORD=phreakmail
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DJANGO_SETTINGS_MODULE=phreakmail.settings
+      - DJANGO_SECRET_KEY=change-this-in-production
+    volumes:
+      - ./:/app
+    command: >
+      bash -c "python manage.py migrate &&
+               python manage.py runserver 0.0.0.0:8000"
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      - POSTGRES_DB=phreakmail
+      - POSTGRES_USER=phreakmail
+      - POSTGRES_PASSWORD=phreakmail
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -1,61 +1,56 @@
-# mailcow: dockerized - 🐮 + 🐋 = 💕
+# PhreakMail
 
-[![Translation status](https://translate.mailcow.email/widgets/mailcow-dockerized/-/translation/svg-badge.svg)](https://translate.mailcow.email/engage/mailcow-dockerized/)
-[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/mailcow_email.svg?style=social&label=Follow%20%40mailcow_email)](https://twitter.com/mailcow_email)
-![Mastodon Follow](https://img.shields.io/mastodon/follow/109388212176073348?domain=https%3A%2F%2Fmailcow.social&label=Follow%20%40doncow%40mailcow.social&link=https%3A%2F%2Fmailcow.social%2F%40doncow)
+## Version 2.0.0
 
+PhreakMail is a dockerized mail server solution with a modern Django-based web interface, designed to be easy to deploy and maintain.
 
-## Want to support mailcow?
+## Features
 
-Please [consider a support contract with Servercow](https://www.servercow.de/mailcow?lang=en#support) to support further development. _We_ support _you_ while _you_ support _us_. :)
+- **Modern Web Interface**: Built with Django and Bootstrap 5
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Role-Based Access Control**: Admin, domain admin, and user roles
+- **Dockerized**: Easy deployment with Docker and Docker Compose
+- **Secure**: TLS encryption, spam filtering, and virus scanning
+- **Complete Email Solution**: SMTP, IMAP, POP3, and webmail
 
-You can also [get a SAL](https://www.servercow.de/mailcow?lang=en#sal) which is a one-time payment with no liabilities or returning fees.
+## Quick Installation
 
-Or just spread the word: moo.
+```bash
+# Clone the repository
+git clone https://github.com/phreak/phreakmail.git
+cd phreakmail
 
-## Many thanks to our GitHub Sponsors ❤️
-A big thank you to everyone supporting us on GitHub Sponsors—your contributions mean the world to us! Special thanks to the following amazing supporters:
+# Generate configuration
+./generate_config.sh
 
-### 100$/Month Sponsors
-  <a href="https://www.colba.net/" target=_blank><img
-    src="https://avatars.githubusercontent.com/u/204464723" height="58"
-  /></a>
-  <a href="https://www.maehdros.com/" target=_blank><img
-    src="https://avatars.githubusercontent.com/u/173894712" height="58"
-  /></a>
+# Start PhreakMail
+docker-compose up -d
+```
 
-### 50$/Month Sponsors
-  <a href="https://github.com/vnukhr" target=_blank><img
-    src="https://avatars.githubusercontent.com/u/7805987?s=52&v=4" height="58"
-  /></a>
+After installation, access the web interface at `https://your-phreakmail-hostname/`.
 
-## Info, documentation and support
+## Web Interface
 
-Please see [the official documentation](https://docs.mailcow.email/) for installation and support instructions. 🐄
+The PhreakMail web interface is built with Django and Bootstrap 5, providing a modern and responsive user experience:
 
-🐛 **If you found a critical security issue, please mail us to [info at servercow.de](mailto:info@servercow.de).**
+- **Admin Interface**: `https://your-phreakmail-hostname/admin/`
+- **Domain Admin Interface**: `https://your-phreakmail-hostname/domainadmin/`
+- **User Interface**: `https://your-phreakmail-hostname/user/`
 
-## Cowmunity
+## Documentation
 
-[mailcow community](https://community.mailcow.email)
+For detailed documentation, please visit [docs.phreakmail.com](https://docs.phreakmail.com).
 
-[Telegram mailcow channel](https://telegram.me/mailcow)
+## Security
 
-[Telegram mailcow Off-Topic channel](https://t.me/mailcowOfftopic)
+If you discover a security vulnerability, please send an email to [contact@phreakmail.com](mailto:contact@phreakmail.com).
 
-[Official 𝕏 (Twitter) Account](https://twitter.com/mailcow_email)
+## License
 
-[Official Mastodon Account](https://mailcow.social/@doncow)
+PhreakMail is released under the MIT License.
 
-Telegram desktop clients are available for [multiple platforms](https://desktop.telegram.org). You can search the groups history for keywords.
+Copyright (c) 2024 phreak
 
-## Misc
+## Important Note
 
-**Important**: mailcow makes use of various open-source software. Please assure you agree with their license before using mailcow.
-Any part of mailcow itself is released under **GNU General Public License, Version 3**.
-
-mailcow is a registered word mark of The Infrastructure Company GmbH, Parkstr. 42, 47877 Willich, Germany.
-
-The project is managed and maintained by The Infrastructure Company GmbH.
-
-Originated from @andryyy (André)
+PhreakMail makes use of various open-source software. Please ensure you agree with their licenses before using PhreakMail.

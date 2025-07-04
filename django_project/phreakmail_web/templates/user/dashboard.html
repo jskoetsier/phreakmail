@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard - PhreakMail{% endblock %}
+
+{% block content %}
+<h1>User Dashboard</h1>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Account Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Username:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Last Login:</strong> {{ user.last_login }}</p>
+                <a href="#" class="btn btn-primary">Change Password</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Email Statistics</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Inbox:</strong> 0 messages</p>
+                <p><strong>Sent:</strong> 0 messages</p>
+                <p><strong>Spam:</strong> 0 messages</p>
+                <p><strong>Trash:</strong> 0 messages</p>
+                <a href="#" class="btn btn-primary">Go to Webmail</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

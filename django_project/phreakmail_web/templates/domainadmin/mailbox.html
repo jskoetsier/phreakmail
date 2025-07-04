@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Domain Admin - Mailboxes - PhreakMail{% endblock %}
+
+{% block content %}
+<h1>Domain Admin - Mailboxes</h1>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Mailboxes</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mailbox in mailboxes %}
+                <tr>
+                    <td>{{ mailbox }}</td>
+                    <td>
+                        {% if mailbox.active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="#" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="#" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No mailboxes found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a href="#" class="btn btn-success">Add Mailbox</a>
+    </div>
+</div>
+{% endblock %}
