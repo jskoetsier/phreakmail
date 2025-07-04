@@ -2,7 +2,7 @@ version: '2.2'
 
 services:
   unbound-phreakmail:
-    image: ghcr.io/phreak/unbound:1.0.0
+    image: mailcow/unbound:1.18
     environment:
       TZ: ${TZ}
       SKIP_UNBOUND_HEALTHCHECK: ${SKIP_UNBOUND_HEALTHCHECK}
@@ -66,7 +66,7 @@ services:
           - redis
 
   clamd-phreakmail:
-    image: ghcr.io/phreak/clamd:1.0.0
+    image: mailcow/clamd:1.68
     restart: always
     depends_on:
       unbound-phreakmail:
@@ -85,7 +85,7 @@ services:
           - clamd
 
   rspamd-phreakmail:
-    image: ghcr.io/phreak/rspamd:1.0.0
+    image: mailcow/rspamd:1.86
     stop_grace_period: 30s
     depends_on:
       - dovecot-phreakmail
@@ -118,7 +118,7 @@ services:
           - rspamd
 
   php-fpm-phreakmail:
-    image: ghcr.io/phreak/phpfpm:1.0.0
+    image: mailcow/phpfpm:1.82
     command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
     depends_on:
       - redis-phreakmail
@@ -201,7 +201,7 @@ services:
           - phpfpm
 
   sogo-phreakmail:
-    image: ghcr.io/phreak/sogo:1.0.0
+    image: mailcow/sogo:1.122
     environment:
       DBNAME: ${DBNAME}
       DBUSER: ${DBUSER}
@@ -252,7 +252,7 @@ services:
           - sogo
 
   dovecot-phreakmail:
-    image: ghcr.io/phreak/dovecot:1.0.0
+    image: mailcow/dovecot:1.25
     depends_on:
       - mysql-phreakmail
       - netfilter-phreakmail
@@ -339,7 +339,7 @@ services:
           - dovecot
 
   postfix-phreakmail:
-    image: ghcr.io/phreak/postfix:1.0.0
+    image: mailcow/postfix:1.73
     depends_on:
       mysql-phreakmail:
         condition: service_started
@@ -395,7 +395,7 @@ services:
       - php-fpm-phreakmail
       - sogo-phreakmail
       - rspamd-phreakmail
-    image: ghcr.io/phreak/nginx:1.0.0
+    image: mailcow/nginx:1.63
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     environment:
@@ -441,7 +441,7 @@ services:
         condition: service_started
       unbound-phreakmail:
         condition: service_healthy
-    image: ghcr.io/phreak/acme:1.0.0
+    image: mailcow/acme:1.88
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     environment:
@@ -479,7 +479,7 @@ services:
           - acme
 
   netfilter-phreakmail:
-    image: ghcr.io/phreak/netfilter:1.0.0
+    image: mailcow/netfilter:1.48
     stop_grace_period: 30s
     restart: always
     privileged: true
@@ -499,7 +499,7 @@ services:
       - /lib/modules:/lib/modules:ro
 
   watchdog-phreakmail:
-    image: ghcr.io/phreak/watchdog:1.0.0
+    image: mailcow/watchdog:1.95
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     tmpfs:
@@ -572,7 +572,7 @@ services:
           - watchdog
 
   dockerapi-phreakmail:
-    image: ghcr.io/phreak/dockerapi:1.0.0
+    image: mailcow/dockerapi:1.43
     security_opt:
       - label=disable
     restart: always
@@ -592,7 +592,7 @@ services:
           - dockerapi
 
   olefy-phreakmail:
-    image: ghcr.io/phreak/olefy:1.0.0
+    image: mailcow/olefy:1.0
     restart: always
     environment:
       TZ: ${TZ}
