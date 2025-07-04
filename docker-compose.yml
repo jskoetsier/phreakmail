@@ -399,7 +399,7 @@ services:
       - php-fpm-phreakmail
       - sogo-phreakmail
       - rspamd-phreakmail
-    image: mailcow/nginx:latest
+    image: nginx:alpine
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     environment:
