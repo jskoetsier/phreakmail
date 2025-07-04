@@ -166,6 +166,14 @@ PhreakMail takes security seriously. See [SECURITY.md](SECURITY.md) for informat
 
 ## Changelog
 
+### v1.0.1 (July 4, 2025)
+
+Bug fix release:
+
+- Added missing `redis-phreakmail` service to docker-compose.override.yml to resolve dependency issue with django-phreakmail service
+- Fixed update script failure caused by undefined service dependency
+- Improved container startup sequence with proper service dependencies
+
 ### v2.0.0 (July 5, 2025)
 
 Major update with significant architectural changes:
