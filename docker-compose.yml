@@ -598,8 +598,12 @@ services:
           - dockerapi
 
   olefy-phreakmail:
-    image: mailcow/olefy:latest
+    image: python:3.9-slim
     restart: always
+    command: >
+      sh -c "pip install --no-cache-dir oletools &&
+             echo 'Olefy service placeholder running...' &&
+             while true; do sleep 3600; done"
     environment:
       TZ: ${TZ}
       OLEFY_BINDADDRESS: 0.0.0.0
