@@ -540,8 +540,6 @@ cp -r data/conf/nginx/django.conf data/conf/nginx/site.conf
 
 # Add Django service to docker-compose.override.yml
 cat << EOF > docker-compose.override.yml
-version: '3'
-
 services:
   django-phreakmail:
     build:
