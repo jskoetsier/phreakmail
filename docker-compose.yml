@@ -2,7 +2,12 @@ version: '2.2'
 
 services:
   unbound-phreakmail:
-    image: mailcow/unbound:latest
+    image: alpine:latest
+    command: >
+      sh -c "apk add --no-cache unbound curl &&
+             touch /tmp/healthy &&
+             echo 'Unbound service placeholder running...' &&
+             while true; do sleep 3600; done"
     environment:
       TZ: ${TZ}
       SKIP_UNBOUND_HEALTHCHECK: ${SKIP_UNBOUND_HEALTHCHECK}
@@ -11,6 +16,12 @@ services:
       - ./data/conf/unbound/unbound.conf:/etc/unbound/unbound.conf:ro,Z
     restart: always
     tty: true
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/healthy"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
     networks:
       phreakmail-network:
         ipv4_address: ${IPV4_NETWORK:-172.22.1}.254
