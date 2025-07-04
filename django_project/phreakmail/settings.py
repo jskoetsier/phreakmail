@@ -111,3 +111,24 @@ AUTH_USER_MODEL = "phreakmail_web.User"
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+# Cache configuration using KeyDB
+KEYDB_HOST = os.environ.get("KEYDB_HOST", "keydb-phreakmail")
+KEYDB_PORT = int(os.environ.get("KEYDB_PORT", 6379))
+KEYDB_PASSWORD = os.environ.get("KEYDB_PASSWORD", "")
+KEYDB_DB = int(os.environ.get("KEYDB_DB", 1))
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{KEYDB_HOST}:{KEYDB_PORT}/{KEYDB_DB}",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": KEYDB_PASSWORD if KEYDB_PASSWORD else None,
+        }
+    }
+}
+
+# Use KeyDB for session cache
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
