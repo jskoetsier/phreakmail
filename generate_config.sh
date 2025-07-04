@@ -225,7 +225,7 @@ cat << EOF > phreakmail.conf
 # ------------------------------
 # example.org is _not_ a valid hostname, use a fqdn here.
 # Default admin user is "admin"
-# Default password is "moohoo"
+# Default password is "phreakMail"
 
 PHREAKMAIL_HOSTNAME=${PHREAKMAIL_HOSTNAME}
 

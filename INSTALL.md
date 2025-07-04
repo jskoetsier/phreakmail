@@ -85,7 +85,7 @@ https://your-phreakmail-hostname/
 
 Default login credentials:
 - Username: admin
-- Password: moohoo
+- Password: phreakMail
 
 **Important:** Change the default password immediately after your first login!
 
