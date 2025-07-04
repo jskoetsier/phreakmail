@@ -506,7 +506,11 @@ services:
       - /lib/modules:/lib/modules:ro
 
   watchdog-phreakmail:
-    image: mailcow/watchdog:latest
+    image: alpine:latest
+    command: >
+      sh -c "apk add --no-cache curl jq &&
+             echo 'Watchdog service placeholder running...' &&
+             while true; do sleep 3600; done"
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     tmpfs:
