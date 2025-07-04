@@ -5,9 +5,7 @@ services:
     image: alpine:3.16
     command: >
       sh -c "apk add --no-cache unbound curl &&
-             mkdir -p /etc/unbound/unbound.conf.d &&
-             if [ ! -f /etc/unbound/unbound.conf ]; then
-               cat > /etc/unbound/unbound.conf <<EOF
+             cat > /tmp/unbound.conf <<EOF
       server:
         interface: 0.0.0.0
         access-control: 0.0.0.0/0 allow
@@ -20,9 +18,8 @@ services:
         forward-addr: 8.8.8.8
         forward-addr: 8.8.4.4
       EOF
-             fi &&
              touch /tmp/healthy &&
-             unbound -d"
+             unbound -c /tmp/unbound.conf -d"
     environment:
       TZ: ${TZ}
       SKIP_UNBOUND_HEALTHCHECK: ${SKIP_UNBOUND_HEALTHCHECK}
