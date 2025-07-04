@@ -479,7 +479,10 @@ services:
           - acme
 
   netfilter-phreakmail:
-    image: mailcow/netfilter:latest
+    image: alpine:latest
+    command: >
+      sh -c "apk add --no-cache iptables ip6tables &&
+             while true; do sleep 3600; done"
     stop_grace_period: 30s
     restart: always
     privileged: true
