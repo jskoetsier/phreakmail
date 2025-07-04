@@ -6,17 +6,21 @@ services:
     command: >
       sh -c "apk add --no-cache unbound curl &&
              mkdir -p /etc/unbound/unbound.conf.d &&
-             echo 'server:' > /etc/unbound/unbound.conf &&
-             echo '  interface: 0.0.0.0' >> /etc/unbound/unbound.conf &&
-             echo '  access-control: 0.0.0.0/0 allow' >> /etc/unbound/unbound.conf &&
-             echo '  do-ip4: yes' >> /etc/unbound/unbound.conf &&
-             echo '  do-ip6: yes' >> /etc/unbound/unbound.conf &&
-             echo '  do-udp: yes' >> /etc/unbound/unbound.conf &&
-             echo '  do-tcp: yes' >> /etc/unbound/unbound.conf &&
-             echo '  forward-zone:' >> /etc/unbound/unbound.conf &&
-             echo '    name: "."' >> /etc/unbound/unbound.conf &&
-             echo '    forward-addr: 8.8.8.8' >> /etc/unbound/unbound.conf &&
-             echo '    forward-addr: 8.8.4.4' >> /etc/unbound/unbound.conf &&
+             if [ ! -f /etc/unbound/unbound.conf ]; then
+               cat > /etc/unbound/unbound.conf <<EOF
+      server:
+        interface: 0.0.0.0
+        access-control: 0.0.0.0/0 allow
+        do-ip4: yes
+        do-ip6: yes
+        do-udp: yes
+        do-tcp: yes
+      forward-zone:
+        name: \".\"
+        forward-addr: 8.8.8.8
+        forward-addr: 8.8.4.4
+      EOF
+             fi &&
              touch /tmp/healthy &&
              unbound -d"
     environment:
