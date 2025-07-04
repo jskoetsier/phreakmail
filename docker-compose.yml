@@ -16,7 +16,7 @@ services:
           aliases:
             - unbound
 
-    mysql-phreakmail:
+  mysql-phreakmail:
       image: mariadb:10.11
       depends_on:
         - unbound-phreakmail
@@ -41,7 +41,7 @@ services:
           aliases:
             - mysql
 
-    redis-phreakmail:
+  redis-phreakmail:
       image: redis:7.4.2-alpine
       entrypoint: ["/bin/sh","/redis-conf.sh"]
       volumes:
@@ -64,7 +64,7 @@ services:
           aliases:
             - redis
 
-    clamd-phreakmail:
+  clamd-phreakmail:
       image: ghcr.io/phreak/clamd:1.0.0
       restart: always
       depends_on:
@@ -83,7 +83,7 @@ services:
           aliases:
             - clamd
 
-    rspamd-phreakmail:
+  rspamd-phreakmail:
       image: ghcr.io/phreak/rspamd:1.0.0
       stop_grace_period: 30s
       depends_on:
@@ -116,7 +116,7 @@ services:
           aliases:
             - rspamd
 
-    php-fpm-phreakmail:
+  php-fpm-phreakmail:
       image: ghcr.io/phreak/phpfpm:1.0.0
       command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
       depends_on:
@@ -199,7 +199,7 @@ services:
           aliases:
             - phpfpm
 
-    sogo-phreakmail:
+  sogo-phreakmail:
       image: ghcr.io/phreak/sogo:1.0.0
       environment:
         - DBNAME=${DBNAME}
@@ -250,7 +250,7 @@ services:
           aliases:
             - sogo
 
-    dovecot-phreakmail:
+  dovecot-phreakmail:
       image: ghcr.io/phreak/dovecot:1.0.0
       depends_on:
         - mysql-phreakmail
@@ -337,7 +337,7 @@ services:
           aliases:
             - dovecot
 
-    postfix-phreakmail:
+  postfix-phreakmail:
       image: ghcr.io/phreak/postfix:1.0.0
       depends_on:
         mysql-phreakmail:
@@ -378,7 +378,7 @@ services:
           aliases:
             - postfix
 
-    memcached-phreakmail:
+  memcached-phreakmail:
       image: memcached:alpine
       restart: always
       environment:
@@ -388,7 +388,7 @@ services:
           aliases:
             - memcached
 
-    nginx-phreakmail:
+  nginx-phreakmail:
       depends_on:
         - redis-phreakmail
         - php-fpm-phreakmail
@@ -434,7 +434,7 @@ services:
           aliases:
             - nginx
 
-    acme-phreakmail:
+  acme-phreakmail:
       depends_on:
         nginx-phreakmail:
           condition: service_started
@@ -477,7 +477,7 @@ services:
           aliases:
             - acme
 
-    netfilter-phreakmail:
+  netfilter-phreakmail:
       image: ghcr.io/phreak/netfilter:1.0.0
       stop_grace_period: 30s
       restart: always
@@ -497,7 +497,7 @@ services:
       volumes:
         - /lib/modules:/lib/modules:ro
 
-    watchdog-phreakmail:
+  watchdog-phreakmail:
       image: ghcr.io/phreak/watchdog:1.0.0
       dns:
         - ${IPV4_NETWORK:-172.22.1}.254
@@ -570,7 +570,7 @@ services:
           aliases:
             - watchdog
 
-    dockerapi-phreakmail:
+  dockerapi-phreakmail:
       image: ghcr.io/phreak/dockerapi:1.0.0
       security_opt:
         - label=disable
@@ -590,7 +590,7 @@ services:
           aliases:
             - dockerapi
 
-    olefy-phreakmail:
+  olefy-phreakmail:
       image: ghcr.io/phreak/olefy:1.0.0
       restart: always
       environment:
@@ -609,7 +609,7 @@ services:
           aliases:
             - olefy
 
-    ofelia-phreakmail:
+  ofelia-phreakmail:
       image: mcuadros/ofelia:latest
       restart: always
       command: daemon --docker -f label=com.docker.compose.project=${COMPOSE_PROJECT_NAME}
@@ -630,7 +630,7 @@ services:
           aliases:
             - ofelia
 
-    ipv6nat-phreakmail:
+  ipv6nat-phreakmail:
       depends_on:
         - unbound-phreakmail
         - mysql-phreakmail
