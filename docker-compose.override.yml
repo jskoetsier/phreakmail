@@ -1,8 +1,19 @@
 version: '2.2'
 
 services:
-  # Replace Apache with Nginx (keeping the same service name for compatibility)
+  # Completely disable the Apache service
   apache2-phreakmail:
+    image: hello-world
+    command: "echo 'Apache service is disabled'"
+    restart: "no"
+    networks: []
+    ports: []
+    volumes: []
+    depends_on: []
+    environment: {}
+
+  # Add a new Nginx service
+  nginx-phreakmail:
     image: nginx:alpine
     ports:
       - "443:443"
@@ -29,6 +40,15 @@ services:
       phreakmail-network:
         aliases:
           - nginx
+          - apache2  # Add this alias for compatibility with other services
+
+  # Update acme-phreakmail to depend on nginx-phreakmail instead of apache2-phreakmail
+  acme-phreakmail:
+    depends_on:
+      nginx-phreakmail:
+        condition: service_started
+      unbound-phreakmail:
+        condition: service_healthy
 
   mysql-phreakmail:
     healthcheck:
