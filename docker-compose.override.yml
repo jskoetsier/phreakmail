@@ -107,8 +107,8 @@ services:
                  sleep 5
                done &&
                echo 'MySQL is ready!' &&
-               # Run migrations with run-syncdb to create missing tables
-               python manage.py migrate --run-syncdb &&
+               # Run migrations with fake-initial to handle existing tables and run-syncdb for missing tables
+               python manage.py migrate --fake-initial --run-syncdb &&
                # Create a superuser for admin access
                echo \"from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('admin', 'admin@example.com', 'admin') if not User.objects.filter(username='admin').exists() else None\" | python manage.py shell &&
                python manage.py collectstatic --noinput &&
