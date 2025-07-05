@@ -1,9 +1,12 @@
 #!/bin/sh
 
 cat <<EOF > /keydb.conf
-requirepass ${KEYDBPASS:-}
 user quota_notify on nopass ~QW_* -@all +get +hget +ping
 EOF
+
+if [ -n "$KEYDBPASS" ]; then
+  echo "requirepass $KEYDBPASS" >> /keydb.conf
+fi
 
 if [ -n "$KEYDBMASTERPASS" ]; then
   echo "masterauth $KEYDBMASTERPASS" >> /keydb.conf

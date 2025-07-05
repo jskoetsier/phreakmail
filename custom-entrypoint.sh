@@ -21,8 +21,31 @@ export KEYDBHOST="${KEYDBHOST:-keydb-phreakmail}"
 export REDISHOST="${KEYDBHOST:-keydb-phreakmail}"
 
 # Create a hosts file entry to map redis-mailcow to keydb-phreakmail
-echo "127.0.0.1 redis-mailcow" >> /etc/hosts
-echo "127.0.0.1 keydb-mailcow" >> /etc/hosts
+if [ -w /etc/hosts ]; then
+  echo "127.0.0.1 redis-mailcow" >> /etc/hosts
+  echo "127.0.0.1 keydb-mailcow" >> /etc/hosts
+fi
+
+# Fix for the unary operator expected error in docker-entrypoint.sh
+# Create a wrapper script that fixes the issue
+cat > /tmp/fix-entrypoint.sh << 'EOF'
+#!/bin/bash
+# Fix for the unary operator expected error
+sed -i 's/\[ "$SKIP_SOGO" == "y" \]/[ "${SKIP_SOGO:-n}" = "y" ]/g' /docker-entrypoint.sh
+sed -i 's/\[ "$SKIP_CLAMD" == "y" \]/[ "${SKIP_CLAMD:-n}" = "y" ]/g' /docker-entrypoint.sh
+sed -i 's/\[ "$SKIP_OLEFY" == "y" \]/[ "${SKIP_OLEFY:-n}" = "y" ]/g' /docker-entrypoint.sh
+sed -i 's/\[ "$SKIP_RSPAMD" == "y" \]/[ "${SKIP_RSPAMD:-n}" = "y" ]/g' /docker-entrypoint.sh
+sed -i 's/\[ "$DISABLE_IPv6" == "y" \]/[ "${DISABLE_IPv6:-n}" = "y" ]/g' /docker-entrypoint.sh
+sed -i 's/\[ "$HTTP_REDIRECT" == "y" \]/[ "${HTTP_REDIRECT:-n}" = "y" ]/g' /docker-entrypoint.sh
+sed -i 's/==/=/g' /docker-entrypoint.sh
+EOF
+
+chmod +x /tmp/fix-entrypoint.sh
+/tmp/fix-entrypoint.sh
+
+# Set Redis environment variables explicitly
+export REDIS_HOST="keydb-phreakmail"
+export REDIS_PORT="6379"
 
 # Log that we're using the custom entrypoint
 echo "Using custom entrypoint script to fix 'too many arguments' error"

@@ -76,6 +76,7 @@ services:
       - netfilter-phreakmail
     ports:
       - "127.0.0.1:7654:6379"
+      - "127.0.0.1:6379:6379"
     environment:
       TZ: ${TZ}
       KEYDBPASS: ${KEYDBPASS:-}
@@ -90,6 +91,7 @@ services:
           - keydb
           - keydb-mailcow
           - redis-mailcow
+          - redis
 
   rspamd-phreakmail:
     image: mailcow/rspamd:latest
@@ -130,6 +132,9 @@ services:
     command: "php-fpm -d date.timezone=${TZ} -d expose_php=0"
     depends_on:
       - keydb-phreakmail
+    environment:
+      REDIS_HOST: keydb-phreakmail
+      REDIS_PORT: 6379
     volumes:
       - ./custom-entrypoint.sh:/custom-entrypoint.sh:z
       - ./data/hooks/phpfpm:/hooks:Z
