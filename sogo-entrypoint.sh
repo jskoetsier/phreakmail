@@ -25,9 +25,9 @@ export IPV4_NETWORK="${IPV4_NETWORK:-172.22.1}"
 export SOGO_EXPIRE_SESSION="${SOGO_EXPIRE_SESSION:-480}"
 export SKIP_SOGO="${SKIP_SOGO:-n}"
 export MASTER="${MASTER:-y}"
-export REDIS_SLAVEOF_IP="${REDIS_SLAVEOF_IP:-}"
-export REDIS_SLAVEOF_PORT="${REDIS_SLAVEOF_PORT:-}"
-export REDISPASS="${REDISPASS:-}"
+export KEYDB_SLAVEOF_IP="${KEYDB_SLAVEOF_IP:-}"
+export KEYDB_SLAVEOF_PORT="${KEYDB_SLAVEOF_PORT:-}"
+export KEYDBPASS="${KEYDBPASS:-}"
 
 # Log that we're using the custom entrypoint
 echo "Using custom entrypoint script for SOGo to fix 'Bad file descriptor' error"

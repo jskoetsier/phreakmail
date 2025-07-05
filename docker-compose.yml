@@ -89,6 +89,7 @@ services:
         aliases:
           - keydb
           - keydb-mailcow
+          - redis-mailcow
 
   rspamd-phreakmail:
     image: mailcow/rspamd:latest
