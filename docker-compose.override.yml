@@ -1,7 +1,7 @@
 version: '2.2'
 
 services:
-  # Add a new Nginx service
+  # Add Nginx service
   nginx-phreakmail:
     image: nginx:alpine
     ports:
@@ -29,9 +29,9 @@ services:
       phreakmail-network:
         aliases:
           - nginx
-          - apache2  # Add this alias for compatibility with other services
+          - webserver
 
-  # Update acme-phreakmail to depend on nginx-phreakmail instead of apache2-phreakmail
+  # Update acme-phreakmail dependencies
   acme-phreakmail:
     depends_on:
       nginx-phreakmail:
