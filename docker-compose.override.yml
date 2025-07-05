@@ -73,6 +73,8 @@ services:
                # python manage.py migrate &&
                python manage.py collectstatic --noinput &&
                gunicorn phreakmail.wsgi:application --bind 0.0.0.0:8000"
+    networks:
+      - phreakmail-network
 
   rainloop-phreakmail:
     image: hardware/rainloop:latest
@@ -92,6 +94,8 @@ services:
       - RAINLOOP_DB_MYSQL_NAME=${DBNAME}
     volumes:
       - ./data/rainloop:/rainloop/data
+    networks:
+      - phreakmail-network
 
 volumes:
   django-static:
