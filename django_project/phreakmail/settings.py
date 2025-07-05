@@ -4,6 +4,7 @@ Django settings for phreakmail project.
 
 import os
 from pathlib import Path
+
 from .version import VERSION
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -15,8 +16,8 @@ SECRET_KEY = "django-insecure-change-this-in-production"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['http://vuurstorm.nl', 'https://vuurstorm.nl']
+ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = ["http://vuurstorm.nl", "https://vuurstorm.nl"]
 
 ALLOWED_HOSTS = ["*"]  # Change this in production
 
@@ -128,7 +129,7 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PASSWORD": KEYDB_PASSWORD if KEYDB_PASSWORD else None,
-        }
+        },
     }
 }
 
