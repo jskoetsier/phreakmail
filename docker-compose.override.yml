@@ -1,9 +1,17 @@
 version: '2.2'
 
 services:
-  # Replace Apache with Nginx
+  # Remove Apache and add Nginx
   apache2-phreakmail:
+    image: hello-world
+    command: echo "This service is disabled"
+    restart: "no"
+
+  nginx-phreakmail:
     image: nginx:alpine
+    ports:
+      - "443:443"
+      - "80:80"
     volumes:
       - ./data/web:/web:ro,z
       - ./data/conf/rspamd/dynmaps:/dynmaps:ro,z
@@ -16,6 +24,16 @@ services:
       - ./data/web/inc/functions.auth.inc.php:/phreakmailauth/functions.auth.inc.php:z
       - ./data/web/inc/sessions.inc.php:/phreakmailauth/sessions.inc.php:z
       - django-static:/app/staticfiles:ro
+    environment:
+      TZ: ${TZ}
+      PHREAKMAIL_HOSTNAME: ${PHREAKMAIL_HOSTNAME}
+      ADDITIONAL_SERVER_NAMES: ${ADDITIONAL_SERVER_NAMES:-}
+      SKIP_RSPAMD: ${SKIP_RSPAMD:-n}
+    restart: always
+    networks:
+      phreakmail-network:
+        aliases:
+          - nginx
 
   mysql-phreakmail:
     healthcheck:
