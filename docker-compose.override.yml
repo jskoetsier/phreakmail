@@ -19,6 +19,7 @@ services:
       - ./data/web/inc/functions.auth.inc.php:/phreakmailauth/functions.auth.inc.php:z
       - ./data/web/inc/sessions.inc.php:/phreakmailauth/sessions.inc.php:z
       - django-static:/app/staticfiles:ro
+      - ./data/web/.well-known/acme-challenge:/var/www/html/.well-known/acme-challenge:z
     environment:
       TZ: ${TZ}
       PHREAKMAIL_HOSTNAME: ${PHREAKMAIL_HOSTNAME}

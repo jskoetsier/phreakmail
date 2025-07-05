@@ -1,6 +1,10 @@
 !data/conf/nginx/dynmaps.conf
 !data/conf/nginx/meta_exporter.conf
 !data/conf/nginx/site.conf
+!data/conf/nginx/acme.conf
+!data/conf/nginx/default.conf
+!data/conf/nginx/django.conf
+!data/conf/nginx/rainloop.conf
 !/**/.gitkeep
 *.iml
 .idea
