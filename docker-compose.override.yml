@@ -1,6 +1,18 @@
 version: '2.2'
 
 services:
+  # Explicitly disable the Apache service
+  apache2-phreakmail:
+    image: hello-world
+    command: "echo 'Apache service is disabled'"
+    restart: "no"
+    networks: []
+    ports: []
+    volumes: []
+    depends_on: []
+    environment: {}
+    profiles: ["disabled"]  # This prevents the service from starting by default
+
   # Add a new Nginx service
   nginx-phreakmail:
     image: nginx:alpine
