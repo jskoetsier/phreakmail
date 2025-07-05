@@ -1,0 +1,105 @@
+version: '2.2'
+
+services:
+  apache2-phreakmail:
+    network_mode: "host"
+
+  mysql-phreakmail:
+    network_mode: "host"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DBROOT}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  php-fpm-phreakmail:
+    network_mode: "host"
+    depends_on:
+      mysql-phreakmail:
+        condition: service_healthy
+      unbound-phreakmail:
+        condition: service_healthy
+    command: >
+      sh -c "echo 'Starting PHP-FPM directly' &&
+             php-fpm -d date.timezone=${TZ} -d expose_php=0"
+
+  rspamd-phreakmail:
+    network_mode: "host"
+
+  clamd-phreakmail:
+    network_mode: "host"
+
+  keydb-phreakmail:
+    network_mode: "host"
+    depends_on:
+      unbound-phreakmail:
+        condition: service_healthy
+
+
+  django-phreakmail:
+    build:
+      context: ./django_project
+      dockerfile: Dockerfile
+    restart: always
+    network_mode: "host"
+    depends_on:
+      mysql-phreakmail:
+        condition: service_healthy
+      unbound-phreakmail:
+        condition: service_healthy
+      keydb-phreakmail:
+        condition: service_started
+    environment:
+      DB_NAME: ${DBNAME}
+      DB_USER: ${DBUSER}
+      DB_PASSWORD: ${DBPASS}
+      DB_HOST: localhost
+      DB_PORT: 3306
+      DJANGO_SETTINGS_MODULE: phreakmail.settings
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-this-in-production}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      PHREAKMAIL_HOSTNAME: ${PHREAKMAIL_HOSTNAME}
+      TZ: ${TZ}
+      KEYDB_HOST: localhost
+      KEYDB_PORT: 6379
+      KEYDB_PASSWORD: ${KEYDBPASS:-}
+      ADDITIONAL_SERVER_NAMES: ${ADDITIONAL_SERVER_NAMES:-}
+    volumes:
+      - ./django_project:/app
+      - django-static:/app/staticfiles
+    command: >
+      bash -c "
+               echo 'Waiting for MySQL to be ready...' &&
+               apt-get update && apt-get install -y netcat-openbsd &&
+               while ! nc -z localhost 3306; do
+                 echo 'MySQL is unavailable - sleeping'
+                 sleep 5
+               done &&
+               echo 'MySQL is ready!' &&
+               # Skip migrations
+               python manage.py collectstatic --noinput &&
+               gunicorn phreakmail.wsgi:application --bind 0.0.0.0:8000"
+
+  rainloop-phreakmail:
+    image: hardware/rainloop:latest
+    restart: always
+    network_mode: "host"
+    depends_on:
+      mysql-phreakmail:
+        condition: service_healthy
+      unbound-phreakmail:
+        condition: service_healthy
+    environment:
+      - TZ=${TZ}
+      - RAINLOOP_HOSTNAME=${PHREAKMAIL_HOSTNAME}
+      - RAINLOOP_DB_MYSQL_HOST=localhost
+      - RAINLOOP_DB_MYSQL_PORT=3306
+      - RAINLOOP_DB_MYSQL_USER=${DBUSER}
+      - RAINLOOP_DB_MYSQL_PASSWORD=${DBPASS}
+      - RAINLOOP_DB_MYSQL_NAME=${DBNAME}
+    volumes:
+      - ./data/rainloop:/rainloop/data
+
+volumes:
+  django-static:
