@@ -15,6 +15,9 @@ SECRET_KEY = "django-insecure-change-this-in-production"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = ['http://vuurstorm.nl', 'https://vuurstorm.nl']
+
 ALLOWED_HOSTS = ["*"]  # Change this in production
 
 # Application definition
