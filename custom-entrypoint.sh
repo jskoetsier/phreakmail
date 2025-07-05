@@ -32,11 +32,12 @@ fi
 # Log that we're using the custom entrypoint
 echo "Using custom entrypoint script that bypasses the original entrypoint"
 
-# Start PHP-FPM directly with the provided arguments
+# Parse the command and arguments
 if [ "$1" = "php-fpm" ]; then
-  # If the command is php-fpm, execute it with any additional arguments
-  echo "Starting PHP-FPM directly..."
-  exec php-fpm "$@"
+  # If the command is php-fpm, execute it with the correct arguments
+  echo "Starting PHP-FPM with timezone ${TZ:-UTC} and expose_php=0..."
+  shift # Remove php-fpm from the arguments
+  exec php-fpm -d date.timezone="${TZ:-UTC}" -d expose_php=0
 else
   # Otherwise, execute the command as is
   echo "Executing command: $@"
