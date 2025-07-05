@@ -548,7 +548,7 @@ services:
     restart: always
     depends_on:
       - mysql-phreakmail
-      - redis-phreakmail
+      - keydb-phreakmail
       - netfilter-phreakmail
     environment:
       - DB_NAME=\${DBNAME}
@@ -561,9 +561,9 @@ services:
       - DJANGO_DEBUG=\${DJANGO_DEBUG:-False}
       - PHREAKMAIL_HOSTNAME=\${PHREAKMAIL_HOSTNAME}
       - TZ=\${TZ}
-      - REDIS_HOST=redis-phreakmail
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=\${REDISPASS}
+      - KEYDB_HOST=keydb-phreakmail
+      - KEYDB_PORT=6379
+      - KEYDB_PASSWORD=\${KEYDBPASS}
       - ADDITIONAL_SERVER_NAMES=\${ADDITIONAL_SERVER_NAMES:-}
     volumes:
       - ./django_project:/app

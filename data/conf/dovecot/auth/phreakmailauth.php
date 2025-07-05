@@ -30,9 +30,9 @@ try {
     $redis->connect(getenv('REDIS_SLAVEOF_IP'), getenv('REDIS_SLAVEOF_PORT'));
   }
   else {
-    $redis->connect('redis-phreakmail', 6379);
+    $redis->connect('keydb-phreakmail', 6379);
   }
-  $redis->auth(getenv("REDISPASS"));
+  $redis->auth(getenv("KEYDBPASS"));
 }
 catch (Exception $e) {
   error_log("PHREAKMAILAUTH: " . $e . PHP_EOL);
