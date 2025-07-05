@@ -23,11 +23,11 @@ if (file_exists('../../../web/inc/vars.local.inc.php')) {
 require_once '../../../web/inc/lib/vendor/autoload.php';
 
 
-// Init Redis
+// Init KeyDB
 $redis = new Redis();
 try {
-  if (!empty(getenv('REDIS_SLAVEOF_IP'))) {
-    $redis->connect(getenv('REDIS_SLAVEOF_IP'), getenv('REDIS_SLAVEOF_PORT'));
+  if (!empty(getenv('KEYDB_SLAVEOF_IP'))) {
+    $redis->connect(getenv('KEYDB_SLAVEOF_IP'), getenv('KEYDB_SLAVEOF_PORT'));
   }
   else {
     $redis->connect('keydb-phreakmail', 6379);

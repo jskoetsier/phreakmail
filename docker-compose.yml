@@ -305,6 +305,7 @@ services:
              mkdir -p /etc/exim4/conf.d &&
              touch /var/log/exim4/mainlog &&
              echo 'Configuring Exim...' &&
+             rm -f /etc/exim4/exim4.conf.template.bak.* &&
              update-exim4.conf.template -r &&
              service exim4 start &&
              tail -f /var/log/exim4/mainlog"

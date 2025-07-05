@@ -17,7 +17,7 @@ export HTTP_REDIRECT="${HTTP_REDIRECT:-n}"
 export PHPFPMHOST="${PHPFPMHOST:-}"
 export SOGOHOST="${SOGOHOST:-}"
 export RSPAMDHOST="${RSPAMDHOST:-}"
-export REDISHOST="${REDISHOST:-}"
+export KEYDBHOST="${KEYDBHOST:-}"
 
 # Log that we're using the custom entrypoint
 echo "Using custom entrypoint script to fix 'too many arguments' error"

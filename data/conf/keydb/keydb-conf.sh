@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cat <<EOF > /keydb.conf
-requirepass $KEYDBPASS
+requirepass ${KEYDBPASS:-}
 user quota_notify on nopass ~QW_* -@all +get +hget +ping
 EOF
 
