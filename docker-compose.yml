@@ -303,7 +303,10 @@ services:
     command: >
       sh -c "apt-get update && apt-get install -y exim4 exim4-daemon-heavy exim4-config mailutils openssl ca-certificates &&
              mkdir -p /etc/exim4/conf.d &&
+             mkdir -p /var/log/exim4 &&
              touch /var/log/exim4/mainlog &&
+             chmod -R 777 /var/log/exim4 &&
+             chown -R Debian-exim:Debian-exim /var/log/exim4 || true &&
              echo 'Configuring Exim...' &&
              rm -f /etc/exim4/exim4.conf.template.bak.* &&
              update-exim4.conf.template -r &&
