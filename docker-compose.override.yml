@@ -97,8 +97,8 @@ services:
                  sleep 5
                done &&
                echo 'MySQL is ready!' &&
-               # Run migrations to create tables
-               python manage.py migrate &&
+               # Run migrations with fake-initial to handle partially migrated database
+               python manage.py migrate --fake-initial &&
                python manage.py collectstatic --noinput &&
                gunicorn phreakmail.wsgi:application --bind 0.0.0.0:8000"
     networks:
