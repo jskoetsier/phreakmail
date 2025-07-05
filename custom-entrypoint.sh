@@ -17,7 +17,12 @@ export HTTP_REDIRECT="${HTTP_REDIRECT:-n}"
 export PHPFPMHOST="${PHPFPMHOST:-}"
 export SOGOHOST="${SOGOHOST:-}"
 export RSPAMDHOST="${RSPAMDHOST:-}"
-export KEYDBHOST="${KEYDBHOST:-}"
+export KEYDBHOST="${KEYDBHOST:-keydb-phreakmail}"
+export REDISHOST="${KEYDBHOST:-keydb-phreakmail}"
+
+# Create a hosts file entry to map redis-mailcow to keydb-phreakmail
+echo "127.0.0.1 redis-mailcow" >> /etc/hosts
+echo "127.0.0.1 keydb-mailcow" >> /etc/hosts
 
 # Log that we're using the custom entrypoint
 echo "Using custom entrypoint script to fix 'too many arguments' error"
