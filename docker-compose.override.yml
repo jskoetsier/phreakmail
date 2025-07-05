@@ -97,8 +97,8 @@ services:
                  sleep 5
                done &&
                echo 'MySQL is ready!' &&
-               # Skip migrations entirely
-               # python manage.py migrate &&
+               # Run migrations to create tables
+               python manage.py migrate &&
                python manage.py collectstatic --noinput &&
                gunicorn phreakmail.wsgi:application --bind 0.0.0.0:8000"
     networks:
