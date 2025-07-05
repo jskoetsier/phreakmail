@@ -46,14 +46,14 @@ services:
       DB_NAME: ${DBNAME}
       DB_USER: ${DBUSER}
       DB_PASSWORD: ${DBPASS}
-      DB_HOST: localhost
+      DB_HOST: mysql-phreakmail
       DB_PORT: 3306
       DJANGO_SETTINGS_MODULE: phreakmail.settings
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-this-in-production}
       DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
       PHREAKMAIL_HOSTNAME: ${PHREAKMAIL_HOSTNAME}
       TZ: ${TZ}
-      KEYDB_HOST: localhost
+      KEYDB_HOST: keydb-phreakmail
       KEYDB_PORT: 6379
       KEYDB_PASSWORD: ${KEYDBPASS:-}
       ADDITIONAL_SERVER_NAMES: ${ADDITIONAL_SERVER_NAMES:-}
@@ -64,7 +64,7 @@ services:
       bash -c "
                echo 'Waiting for MySQL to be ready...' &&
                apt-get update && apt-get install -y netcat-openbsd &&
-               while ! nc -z localhost 3306; do
+               while ! nc -z mysql-phreakmail 3306; do
                  echo 'MySQL is unavailable - sleeping'
                  sleep 5
                done &&
@@ -85,7 +85,7 @@ services:
     environment:
       - TZ=${TZ}
       - RAINLOOP_HOSTNAME=${PHREAKMAIL_HOSTNAME}
-      - RAINLOOP_DB_MYSQL_HOST=localhost
+      - RAINLOOP_DB_MYSQL_HOST=mysql-phreakmail
       - RAINLOOP_DB_MYSQL_PORT=3306
       - RAINLOOP_DB_MYSQL_USER=${DBUSER}
       - RAINLOOP_DB_MYSQL_PASSWORD=${DBPASS}
