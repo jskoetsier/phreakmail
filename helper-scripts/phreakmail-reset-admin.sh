@@ -101,13 +101,13 @@ if [ -z "$DBNAME" ] || [ -z "$DBUSER" ] || [ -z "$DBPASS" ]; then
 fi
 
 # Check if containers are running
-if ! docker-compose ps | grep -q "mysql-phreakmail.*Up"; then
+if ! docker-compose ps | grep -q "mysql-phreakmail.*Up.*"; then
     echo -e "${RED}Error: MySQL container is not running${NC}"
     echo "Please start PhreakMail containers with: docker-compose up -d"
     exit 1
 fi
 
-if ! docker-compose ps | grep -q "php-fpm-phreakmail.*Up"; then
+if ! docker-compose ps | grep -q "php-fpm-phreakmail.*Up.*"; then
     echo -e "${RED}Error: PHP-FPM container is not running${NC}"
     echo "Please start PhreakMail containers with: docker-compose up -d"
     exit 1
