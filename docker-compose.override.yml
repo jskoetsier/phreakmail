@@ -1,7 +1,21 @@
 version: '2.2'
 
 services:
+  # Replace Apache with Nginx
   apache2-phreakmail:
+    image: nginx:alpine
+    volumes:
+      - ./data/web:/web:ro,z
+      - ./data/conf/rspamd/dynmaps:/dynmaps:ro,z
+      - ./data/assets/ssl/:/etc/ssl/mail/:ro,z
+      - ./data/conf/nginx/:/etc/nginx/conf.d/:z
+      - ./data/conf/nginx/includes/:/etc/nginx/conf.d/includes/:z
+      - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro,z
+      - ./data/conf/dovecot/auth/phreakmailauth.php:/phreakmailauth/phreakmailauth.php:z
+      - ./data/web/inc/functions.inc.php:/phreakmailauth/functions.inc.php:z
+      - ./data/web/inc/functions.auth.inc.php:/phreakmailauth/functions.auth.inc.php:z
+      - ./data/web/inc/sessions.inc.php:/phreakmailauth/sessions.inc.php:z
+      - django-static:/app/staticfiles:ro
 
   mysql-phreakmail:
     healthcheck:
@@ -21,14 +35,15 @@ services:
              php-fpm -d date.timezone=${TZ} -d expose_php=0"
 
   rspamd-phreakmail:
+    restart: always
 
   clamd-phreakmail:
+    restart: always
 
   keydb-phreakmail:
     depends_on:
       unbound-phreakmail:
         condition: service_healthy
-
 
   django-phreakmail:
     build:
