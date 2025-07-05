@@ -1,13 +1,8 @@
 version: '2.2'
 
 services:
-  # Remove Apache and add Nginx
+  # Replace Apache with Nginx (keeping the same service name for compatibility)
   apache2-phreakmail:
-    image: hello-world
-    command: echo "This service is disabled"
-    restart: "no"
-
-  nginx-phreakmail:
     image: nginx:alpine
     ports:
       - "443:443"
