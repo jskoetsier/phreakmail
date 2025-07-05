@@ -135,6 +135,8 @@ services:
     environment:
       REDIS_HOST: keydb-phreakmail
       REDIS_PORT: 6379
+      REDISHOST: keydb-phreakmail
+      KEYDBHOST: keydb-phreakmail
     volumes:
       - ./custom-entrypoint.sh:/custom-entrypoint.sh:z
       - ./data/hooks/phpfpm:/hooks:Z
