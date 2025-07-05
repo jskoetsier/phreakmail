@@ -102,7 +102,7 @@ data/postfix/
 data/dovecot/
 data/comodo/
 data/rainloop/
-data/apache2/
+data/nginx/
 data/acme/
 data/ssl/
 data/sieve/

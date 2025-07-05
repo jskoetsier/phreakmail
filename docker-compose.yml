@@ -162,7 +162,7 @@ services:
       - ./data/conf/dovecot/global_sieve_before:/global_sieve/before:z
       - ./data/conf/dovecot/global_sieve_after:/global_sieve/after:z
       - ./data/assets/templates:/tpls:z
-      - ./data/conf/apache2/:/etc/apache2/conf.d/:z
+      - ./data/conf/nginx/:/etc/nginx/conf.d/:z
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     environment:
@@ -369,12 +369,12 @@ services:
         aliases:
           - memcached
 
-  apache2-phreakmail:
+  nginx-phreakmail:
     depends_on:
       - keydb-phreakmail
       - php-fpm-phreakmail
       - rspamd-phreakmail
-    image: httpd:2.4-alpine
+    image: nginx:alpine
     dns:
       - ${IPV4_NETWORK:-172.22.1}.254
     environment:
@@ -390,18 +390,20 @@ services:
       RSPAMDHOST: ${RSPAMDHOST:-}
       KEYDBHOST: ${KEYDBHOST:-}
       IPV4_NETWORK: ${IPV4_NETWORK:-172.22.1}
-      APACHE_USE_PROXY_PROTOCOL: ${APACHE_USE_PROXY_PROTOCOL:-n}
+      NGINX_USE_PROXY_PROTOCOL: ${NGINX_USE_PROXY_PROTOCOL:-n}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
     volumes:
       - ./data/web:/web:ro,z
       - ./data/conf/rspamd/dynmaps:/dynmaps:ro,z
       - ./data/assets/ssl/:/etc/ssl/mail/:ro,z
-      - ./data/conf/apache2/:/usr/local/apache2/conf/extra/:z
+      - ./data/conf/nginx/:/etc/nginx/conf.d/:z
+      - ./data/conf/nginx/includes/:/etc/nginx/conf.d/includes/:z
       - ./data/conf/rspamd/meta_exporter:/meta_exporter:ro,z
       - ./data/conf/dovecot/auth/phreakmailauth.php:/phreakmailauth/phreakmailauth.php:z
       - ./data/web/inc/functions.inc.php:/phreakmailauth/functions.inc.php:z
       - ./data/web/inc/functions.auth.inc.php:/phreakmailauth/functions.auth.inc.php:z
       - ./data/web/inc/sessions.inc.php:/phreakmailauth/sessions.inc.php:z
+      - django-static:/app/staticfiles:ro
     ports:
       - "443:443"
       - "80:80"
@@ -409,11 +411,12 @@ services:
     networks:
       phreakmail-network:
         aliases:
-          - apache2
+          - nginx
+          - webserver
 
   acme-phreakmail:
     depends_on:
-      apache2-phreakmail:
+      nginx-phreakmail:
         condition: service_started
       unbound-phreakmail:
         condition: service_healthy
@@ -531,7 +534,7 @@ services:
       KEYDB_SLAVEOF_PORT: ${KEYDB_SLAVEOF_PORT:-}
       KEYDBPASS: ${KEYDBPASS:-}
       EXTERNAL_CHECKS_THRESHOLD: ${EXTERNAL_CHECKS_THRESHOLD:-1}
-      APACHE_THRESHOLD: ${APACHE_THRESHOLD:-5}
+      NGINX_THRESHOLD: ${NGINX_THRESHOLD:-5}
       KEYDB_THRESHOLD: ${KEYDB_THRESHOLD:-5}
       MYSQL_THRESHOLD: ${MYSQL_THRESHOLD:-5}
       MYSQL_REPLICATION_THRESHOLD: ${MYSQL_REPLICATION_THRESHOLD:-1}
@@ -644,7 +647,7 @@ services:
       - dovecot-phreakmail
       - exim-phreakmail
       - memcached-phreakmail
-      - apache2-phreakmail
+      - nginx-phreakmail
       - acme-phreakmail
       - netfilter-phreakmail
       - watchdog-phreakmail
