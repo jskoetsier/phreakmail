@@ -95,7 +95,7 @@ services:
     stop_grace_period: 30s
     depends_on:
       - dovecot-phreakmail
-      - comodo-phreakmail
+      - clamd-phreakmail
     environment:
       TZ: ${TZ}
       IPV4_NETWORK: ${IPV4_NETWORK:-172.22.1}
@@ -564,19 +564,19 @@ services:
         aliases:
           - dockerapi
 
-  comodo-phreakmail:
-    image: tecnativa/comodo-cav:latest
+  clamd-phreakmail:
+    image: clamav/clamav:latest
     restart: always
     volumes:
-      - comodo-db-vol-1:/var/lib/comodo
-      - ./data/conf/comodo:/etc/comodo:Z
+      - ./data/conf/clamav:/etc/clamav:Z
+      - clamav-db-vol-1:/var/lib/clamav
     environment:
       TZ: ${TZ}
-      SKIP_COMODO: ${SKIP_COMODO:-n}
+      SKIP_CLAMD: ${SKIP_CLAMD:-n}
     networks:
       phreakmail-network:
         aliases:
-          - comodo
+          - clamd
 
   olefy-phreakmail:
     image: python:3.9-slim
@@ -626,7 +626,7 @@ services:
       - unbound-phreakmail
       - mysql-phreakmail
       - keydb-phreakmail
-      - comodo-phreakmail
+      - clamd-phreakmail
       - rspamd-phreakmail
       - php-fpm-phreakmail
       - dovecot-phreakmail
@@ -670,5 +670,5 @@ volumes:
   rspamd-vol-1:
   exim-vol-1:
   crypt-vol-1:
-  comodo-db-vol-1:
+  clamav-db-vol-1:
   django-static:

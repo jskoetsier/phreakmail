@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced Redis with KeyDB for improved performance and memory efficiency
 - Replaced Nginx with Apache web server
 - Replaced SOGo webmail client with RainLoop webmail client
-- Replaced ClamAV with Comodo for antivirus scanning
+- Replaced Comodo with ClamAV for antivirus scanning
 - Updated container dependencies and base images
 - Improved container startup sequence with proper dependencies
 - Enhanced security configurations across all components
